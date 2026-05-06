@@ -1,0 +1,11 @@
+  feature/auth-service[m
+  feature/cliente-service[m
+  feature/extras-service[m
+  feature/habitacion-service[m
+* [32mfeature/hotel-service[m
+  feature/inventario-service[m
+  feature/notificacion-service[m
+  feature/pago-service[m
+  feature/resena-service[m
+  feature/reserva-service[m
+  main[m
