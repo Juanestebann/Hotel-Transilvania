@@ -18,7 +18,7 @@ public class ClienteClient {
     public Mono<ClienteDTO> obtenerCliente(Long id){
 
         WebClient webClient = webClientBuilder
-                .baseUrl("http://localhost:8092/api/v1/clientes")
+                .baseUrl("http://localhost:8082/api/v1/clientes")
                 .build();
 
         return webClient.get()
