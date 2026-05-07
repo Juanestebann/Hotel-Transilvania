@@ -26,6 +26,10 @@ public class Reserva {
     private Long idCliente;
 
     @Column(nullable = false)
+    @NotNull(message = "El idUsuario es obligatorio")
+    private Long idUsuario;
+
+    @Column(nullable = false)
     @NotNull(message = "El idHotel es obligatorio")
     private Long idHotel;
 

@@ -13,10 +13,12 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
     // Obtener reservas por idHotel
     List<Reserva> findByIdHotel(Long idHotel);
 
+    //Obtener reservas por idUsuario
+    List<Reserva> findByIdUsuario(Long idUsuario);
+
     // Obtener reservas por idHabitacion
     List<Reserva> findByIdHabitacion(Long idHabitacion);
 
     // Obtener reservas por estadoReserva
     List<Reserva> findByEstadoReserva(String estadoReserva);
-
 }

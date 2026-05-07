@@ -18,27 +18,38 @@ public class ReservaController {
     @GetMapping
     public ResponseEntity<?> findAll(
             @RequestParam(required = false) Long idCliente,
+            @RequestParam(required = false) Long idUsuario,
             @RequestParam(required = false) Long idHotel,
             @RequestParam(required = false) Long idHabitacion,
             @RequestParam(required = false) String estadoReserva) {
 
         if (idCliente != null) {
-            return ResponseEntity.status(HttpStatus.OK).body(reservaService.findByIdCliente(idCliente));
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(reservaService.findByIdCliente(idCliente));
+        }
+
+        if (idUsuario != null) {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(reservaService.findByIdUsuario(idUsuario));
         }
 
         if (idHotel != null) {
-            return ResponseEntity.status(HttpStatus.OK).body(reservaService.findByIdHotel(idHotel));
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(reservaService.findByIdHotel(idHotel));
         }
 
         if (idHabitacion != null) {
-            return ResponseEntity.status(HttpStatus.OK).body(reservaService.findByIdHabitacion(idHabitacion));
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(reservaService.findByIdHabitacion(idHabitacion));
         }
 
         if (estadoReserva != null) {
-            return ResponseEntity.status(HttpStatus.OK).body(reservaService.findByEstadoReserva(estadoReserva));
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(reservaService.findByEstadoReserva(estadoReserva));
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(reservaService.findAll());
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(reservaService.findAll());
     }
 
     @GetMapping("/{id}")
