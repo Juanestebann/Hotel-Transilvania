@@ -15,7 +15,7 @@ public class ClienteClient {
 
     private final WebClient.Builder webClientBuilder;
 
-    public Mono<ClienteDTO> obtenerCliente(Long id){
+    public ClienteDTO obtenerClientePorId(Long id) {
 
         WebClient webClient = webClientBuilder
                 .baseUrl("http://localhost:8082/api/v1/clientes")
@@ -36,6 +36,7 @@ public class ClienteClient {
                                 "Error en ms-cliente-service"
                         ))
                 )
-                .bodyToMono(ClienteDTO.class);
+                .bodyToMono(ClienteDTO.class)
+                .block();
     }
 }
