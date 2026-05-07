@@ -1,5 +1,7 @@
 package com.example.ms_reserva_service.service;
 
+import com.example.ms_reserva_service.client.ClienteClient;
+import com.example.ms_reserva_service.client.UsuarioClient;
 import com.example.ms_reserva_service.model.Reserva;
 import com.example.ms_reserva_service.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,8 @@ import java.util.NoSuchElementException;
 public class ReservaService {
 
     private final ReservaRepository reservaRepository;
+    private final ClienteClient clienteClient;
+    private final UsuarioClient usuarioClient;
 
     public List<Reserva> findAll() {
         return reservaRepository.findAll();
@@ -22,6 +26,9 @@ public class ReservaService {
     public Reserva findById(Long id) {
         return reservaRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Reserva no encontrada con id: " + id));
+    }
+    public List<Reserva> findByIdUsuario(Long idUsuario) {
+        return reservaRepository.findByIdUsuario(idUsuario);
     }
 
     public List<Reserva> findByIdCliente(Long idCliente) {
@@ -41,7 +48,12 @@ public class ReservaService {
     }
 
     public Reserva guardar(Reserva reserva) {
+
         validarFechas(reserva);
+
+        clienteClient.obtenerClientePorId(reserva.getIdCliente());
+
+        usuarioClient.obtenerUsuarioPorId(reserva.getIdUsuario());
 
         reserva.setFechaCreacion(LocalDateTime.now());
 
@@ -49,16 +61,29 @@ public class ReservaService {
     }
 
     public Reserva actualizar(Long id, Reserva reservaActualizada) {
+
         validarFechas(reservaActualizada);
+
+        clienteClient.obtenerClientePorId(reservaActualizada.getIdCliente());
+
+        usuarioClient.obtenerUsuarioPorId(reservaActualizada.getIdUsuario());
 
         Reserva reservaExistente = findById(id);
 
         reservaExistente.setIdCliente(reservaActualizada.getIdCliente());
+
+        reservaExistente.setIdUsuario(reservaActualizada.getIdUsuario());
+
         reservaExistente.setIdHotel(reservaActualizada.getIdHotel());
+
         reservaExistente.setIdHabitacion(reservaActualizada.getIdHabitacion());
+
         reservaExistente.setFechaInicio(reservaActualizada.getFechaInicio());
+
         reservaExistente.setFechaFin(reservaActualizada.getFechaFin());
+
         reservaExistente.setCantidadPersonas(reservaActualizada.getCantidadPersonas());
+
         reservaExistente.setEstadoReserva(reservaActualizada.getEstadoReserva());
 
         return reservaRepository.save(reservaExistente);
