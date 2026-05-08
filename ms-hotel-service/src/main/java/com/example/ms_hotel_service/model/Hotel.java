@@ -1,9 +1,7 @@
 package com.example.ms_hotel_service.model;
 
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,26 +11,34 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "hotel")
-
 public class Hotel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "idHotel")
     private Long id;
-    @Column(nullable = false)
-    @NotNull
+
+    @NotBlank(message = "El nombre del hotel es obligatorio")
+    @Column(nullable = false, length = 50)
     private String nombre;
-    @Column(nullable = false)
-    @NotBlank
+
+    @NotBlank(message = "La dirección del hotel es obligatoria")
+    @Column(nullable = false, length = 100)
     private String direccion;
-    @NotBlank
+
+    @NotBlank(message = "La ciudad del hotel es obligatoria")
+    @Column(nullable = false, length = 50)
     private String ciudad;
-    @NotBlank
+
+    @NotBlank(message = "El país del hotel es obligatorio")
+    @Column(nullable = false, length = 50)
     private String pais;
-    @Column(nullable = false)
-    @NotBlank
+
+    @NotBlank(message = "La categoría del hotel es obligatoria")
+    @Column(nullable = false, length = 30)
     private String categoria;
-    @NotBlank
+
+    @NotBlank(message = "La descripción del hotel es obligatoria")
+    @Column(nullable = false, length = 255)
     private String descripcion;
 }

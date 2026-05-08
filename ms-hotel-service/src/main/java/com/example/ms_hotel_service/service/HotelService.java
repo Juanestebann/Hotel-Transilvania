@@ -2,45 +2,53 @@ package com.example.ms_hotel_service.service;
 
 import com.example.ms_hotel_service.model.Hotel;
 import com.example.ms_hotel_service.repository.HotelRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class HotelService {
-    @Autowired
-    private HotelRepository hotelRepository;
-    //Listar todos
-    public List<Hotel> findAll(){
+
+    private final HotelRepository hotelRepository;
+
+    // Listar todos
+    public List<Hotel> findAll() {
         return hotelRepository.findAll();
     }
 
-    public List<Hotel> findByCategoria(String categoria){
-        return hotelRepository.findByCategoria(categoria);
-    }
-    //Obtener por Id
-    /*
-    public Optional<Hotel> findById(Long id){
-        return hotelRepository.findById(id);
-    }
-    */
+    // Buscar por ID
     public Hotel findById(Long id) {
         return hotelRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Hotel no encontrado con id: " + id));
     }
 
-    //Guardar/Modificar
-    public Hotel guardar(Hotel hotel){
+    // Buscar por categoría
+    public List<Hotel> findByCategoria(String categoria) {
+        return hotelRepository.findByCategoria(categoria);
+    }
+
+    // Buscar por ciudad
+    public List<Hotel> findByCiudad(String ciudad) {
+        return hotelRepository.findByCiudad(ciudad);
+    }
+
+    // Buscar por país
+    public List<Hotel> findByPais(String pais) {
+        return hotelRepository.findByPais(pais);
+    }
+
+    // Guardar hotel
+    public Hotel guardar(Hotel hotel) {
+        hotel.setId(null);
         return hotelRepository.save(hotel);
     }
 
+    // Actualizar hotel
     public Hotel actualizarHotel(Long id, Hotel hotel) {
-
-        Hotel h = hotelRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Hotel no encontrado"));
+        Hotel h = findById(id);
 
         h.setNombre(hotel.getNombre());
         h.setDireccion(hotel.getDireccion());
@@ -52,13 +60,9 @@ public class HotelService {
         return hotelRepository.save(h);
     }
 
-
-
-    //Delete
-    public String eliminar(Long id){
-        hotelRepository.deleteById(id);
-        return "Hotel Eliminado: " + id;
+    // Eliminar hotel
+    public void eliminar(Long id) {
+        Hotel hotel = findById(id);
+        hotelRepository.delete(hotel);
     }
-
-
 }
