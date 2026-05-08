@@ -17,7 +17,7 @@ public class HotelClient {
     public HotelDTO obtenerHotelPorId(Long idHotel) {
 
         return webClientBuilder
-                .baseUrl("http://localhost:9090/api/v1/hoteles")
+                .baseUrl("http://localhost:8083/api/v1/hoteles")
                 .build()
                 .get()
                 .uri("/{id}", idHotel)

@@ -16,14 +16,24 @@ public class UsuarioClient {
     private final WebClient.Builder webClientBuilder;
 
     public UsuarioDTO obtenerUsuarioPorId(Long idUsuario) {
-        return webClientBuilder.build()
-                .get()
-                .uri("http://localhost:8081/api/v1/usuarios/{id}", idUsuario)
+
+        WebClient webClient = webClientBuilder
+                .baseUrl("http://localhost:8081/api/v1/usuarios")
+                .build();
+
+        return webClient.get()
+                .uri("/{id}", idUsuario)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         Mono.error(new ResponseStatusException(
                                 HttpStatus.NOT_FOUND,
                                 "Usuario no encontrado con id: " + idUsuario
+                        ))
+                )
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        Mono.error(new ResponseStatusException(
+                                HttpStatus.SERVICE_UNAVAILABLE,
+                                "Error en ms-usuario-service"
                         ))
                 )
                 .bodyToMono(UsuarioDTO.class)

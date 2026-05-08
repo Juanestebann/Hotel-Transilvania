@@ -1,4 +1,4 @@
-CREATE TABLE git reserva (
+CREATE TABLE reserva (
     idReserva BIGINT AUTO_INCREMENT PRIMARY KEY,
     idCliente BIGINT NOT NULL,
     idUsuario BIGINT NOT NULL,
