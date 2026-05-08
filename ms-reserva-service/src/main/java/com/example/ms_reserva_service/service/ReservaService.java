@@ -2,6 +2,7 @@ package com.example.ms_reserva_service.service;
 
 import com.example.ms_reserva_service.client.ClienteClient;
 import com.example.ms_reserva_service.client.HabitacionClient;
+import com.example.ms_reserva_service.client.HotelClient;
 import com.example.ms_reserva_service.client.UsuarioClient;
 import com.example.ms_reserva_service.model.Reserva;
 import com.example.ms_reserva_service.repository.ReservaRepository;
@@ -20,6 +21,7 @@ public class ReservaService {
     private final ClienteClient clienteClient;
     private final UsuarioClient usuarioClient;
     private final HabitacionClient habitacionClient;
+    private final HotelClient hotelClient;
 
     public List<Reserva> findAll() {
         return reservaRepository.findAll();
@@ -29,6 +31,7 @@ public class ReservaService {
         return reservaRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Reserva no encontrada con id: " + id));
     }
+
     public List<Reserva> findByIdUsuario(Long idUsuario) {
         return reservaRepository.findByIdUsuario(idUsuario);
     }
@@ -57,6 +60,8 @@ public class ReservaService {
 
         usuarioClient.obtenerUsuarioPorId(reserva.getIdUsuario());
 
+        hotelClient.obtenerHotelPorId(reserva.getIdHotel());
+
         habitacionClient.obtenerHabitacionPorId(reserva.getIdHabitacion());
 
         reserva.setFechaCreacion(LocalDateTime.now());
@@ -71,6 +76,8 @@ public class ReservaService {
         clienteClient.obtenerClientePorId(reservaActualizada.getIdCliente());
 
         usuarioClient.obtenerUsuarioPorId(reservaActualizada.getIdUsuario());
+
+        hotelClient.obtenerHotelPorId(reservaActualizada.getIdHotel());
 
         habitacionClient.obtenerHabitacionPorId(reservaActualizada.getIdHabitacion());
 
