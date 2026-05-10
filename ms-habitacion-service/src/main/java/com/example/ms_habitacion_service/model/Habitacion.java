@@ -1,4 +1,5 @@
 package com.example.ms_habitacion_service.model;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -37,4 +38,8 @@ public class Habitacion {
     @Column(nullable = false)
     @NotBlank(message = "El estado de la habitación es obligatorio")
     private String estadoHabitacion;
+
+    @Column(nullable = false)
+    @NotNull(message = "El id del hotel es obligatorio")
+    private Long idHotel;
 }

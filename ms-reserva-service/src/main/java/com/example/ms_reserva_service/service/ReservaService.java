@@ -4,6 +4,7 @@ import com.example.ms_reserva_service.client.ClienteClient;
 import com.example.ms_reserva_service.client.HabitacionClient;
 import com.example.ms_reserva_service.client.HotelClient;
 import com.example.ms_reserva_service.client.UsuarioClient;
+import com.example.ms_reserva_service.dto.HabitacionDTO;
 import com.example.ms_reserva_service.model.Reserva;
 import com.example.ms_reserva_service.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +63,9 @@ public class ReservaService {
 
         hotelClient.obtenerHotelPorId(reserva.getIdHotel());
 
-        habitacionClient.obtenerHabitacionPorId(reserva.getIdHabitacion());
+        HabitacionDTO habitacion = habitacionClient.obtenerHabitacionPorId(reserva.getIdHabitacion());
+
+        validarHabitacionPerteneceAlHotel(reserva, habitacion);
 
         reserva.setFechaCreacion(LocalDateTime.now());
 
@@ -79,7 +82,9 @@ public class ReservaService {
 
         hotelClient.obtenerHotelPorId(reservaActualizada.getIdHotel());
 
-        habitacionClient.obtenerHabitacionPorId(reservaActualizada.getIdHabitacion());
+        HabitacionDTO habitacion = habitacionClient.obtenerHabitacionPorId(reservaActualizada.getIdHabitacion());
+
+        validarHabitacionPerteneceAlHotel(reservaActualizada, habitacion);
 
         Reserva reservaExistente = findById(id);
 
@@ -95,6 +100,15 @@ public class ReservaService {
         return reservaRepository.save(reservaExistente);
     }
 
+    private void validarHabitacionPerteneceAlHotel(Reserva reserva, HabitacionDTO habitacion) {
+
+        if (!habitacion.getIdHotel().equals(reserva.getIdHotel())) {
+            throw new IllegalArgumentException(
+                    "La habitación no pertenece al hotel indicado"
+            );
+        }
+    }
+
     public void eliminar(Long id) {
         Reserva reserva = findById(id);
         reservaRepository.delete(reserva);
@@ -107,4 +121,6 @@ public class ReservaService {
             }
         }
     }
+
+
 }

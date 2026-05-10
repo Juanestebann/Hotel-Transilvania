@@ -23,17 +23,25 @@ public class HabitacionService {
     }
 
     public Habitacion guardar(Habitacion habitacion) {
+
+        validarEstadoHabitacion(habitacion.getEstadoHabitacion());
+
+        habitacion.setEstadoHabitacion(habitacion.getEstadoHabitacion().toUpperCase());
+
         return habitacionRepository.save(habitacion);
     }
-
     public Habitacion actualizar(Long id, Habitacion habitacionActualizada) {
+
+        validarEstadoHabitacion(habitacionActualizada.getEstadoHabitacion());
+
         Habitacion habitacionExistente = findById(id);
 
         habitacionExistente.setNumeroHabitacion(habitacionActualizada.getNumeroHabitacion());
         habitacionExistente.setTipoHabitacion(habitacionActualizada.getTipoHabitacion());
         habitacionExistente.setPrecioBase(habitacionActualizada.getPrecioBase());
         habitacionExistente.setCapacidad(habitacionActualizada.getCapacidad());
-        habitacionExistente.setEstadoHabitacion(habitacionActualizada.getEstadoHabitacion());
+        habitacionExistente.setEstadoHabitacion(habitacionActualizada.getEstadoHabitacion().toUpperCase());
+        habitacionExistente.setIdHotel(habitacionActualizada.getIdHotel());
 
         return habitacionRepository.save(habitacionExistente);
     }
@@ -41,5 +49,33 @@ public class HabitacionService {
     public void eliminar(Long id) {
         Habitacion habitacion = findById(id);
         habitacionRepository.delete(habitacion);
+    }
+
+    public List<Habitacion> findByEstadoHabitacion(String estadoHabitacion) {
+
+        validarEstadoHabitacion(estadoHabitacion);
+
+        return habitacionRepository.findByEstadoHabitacion(
+                estadoHabitacion.toUpperCase()
+        );
+    }
+
+    public List<Habitacion> findByCapacidadMinima(Integer capacidad) {
+        return habitacionRepository.findByCapacidadGreaterThanEqual(capacidad);
+    }
+
+    public List<Habitacion> findByIdHotel(Long idHotel) {
+        return habitacionRepository.findByIdHotel(idHotel);
+    }
+    private void validarEstadoHabitacion(String estadoHabitacion) {
+
+        if (!estadoHabitacion.equalsIgnoreCase("DISPONIBLE") &&
+                !estadoHabitacion.equalsIgnoreCase("OCUPADA") &&
+                !estadoHabitacion.equalsIgnoreCase("MANTENIMIENTO")) {
+
+            throw new IllegalArgumentException(
+                    "Estado de habitación inválido. Use: DISPONIBLE, OCUPADA o MANTENIMIENTO"
+            );
+        }
     }
 }

@@ -15,4 +15,5 @@ public class HabitacionDTO {
     private Double precioBase;
     private Integer capacidad;
     private String estadoHabitacion;
+    private Long idHotel;
 }

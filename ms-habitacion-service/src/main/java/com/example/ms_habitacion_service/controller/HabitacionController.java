@@ -25,6 +25,32 @@ public class HabitacionController {
     public ResponseEntity<Habitacion> findById(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(habitacionService.findById(id));
     }
+    @GetMapping("/estado/{estadoHabitacion}")
+    public ResponseEntity<List<Habitacion>> findByEstadoHabitacion(
+            @PathVariable String estadoHabitacion) {
+
+        return ResponseEntity.ok(
+                habitacionService.findByEstadoHabitacion(estadoHabitacion)
+        );
+    }
+
+    @GetMapping("/capacidad/{capacidad}")
+    public ResponseEntity<List<Habitacion>> findByCapacidadMinima(
+            @PathVariable Integer capacidad) {
+
+        return ResponseEntity.ok(
+                habitacionService.findByCapacidadMinima(capacidad)
+        );
+    }
+
+    @GetMapping("/hotel/{idHotel}")
+    public ResponseEntity<List<Habitacion>> findByIdHotel(
+            @PathVariable Long idHotel) {
+
+        return ResponseEntity.ok(
+                habitacionService.findByIdHotel(idHotel)
+        );
+    }
 
     @PostMapping
     public ResponseEntity<Habitacion> guardarHabitacion(@Valid @RequestBody Habitacion habitacion) {
