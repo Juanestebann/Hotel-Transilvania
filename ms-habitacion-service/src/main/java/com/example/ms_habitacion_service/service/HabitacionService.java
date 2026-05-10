@@ -1,4 +1,5 @@
 package com.example.ms_habitacion_service.service;
+import com.example.ms_habitacion_service.client.HotelClient;
 import com.example.ms_habitacion_service.model.Habitacion;
 import com.example.ms_habitacion_service.repository.HabitacionRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import java.util.NoSuchElementException;
 public class HabitacionService {
 
     private final HabitacionRepository habitacionRepository;
+    private final HotelClient hotelClient;
 
     public List<Habitacion> findAll() {
         return habitacionRepository.findAll();
@@ -26,6 +28,8 @@ public class HabitacionService {
 
         validarEstadoHabitacion(habitacion.getEstadoHabitacion());
 
+        hotelClient.obtenerHotelPorId(habitacion.getIdHotel());
+
         habitacion.setEstadoHabitacion(habitacion.getEstadoHabitacion().toUpperCase());
 
         return habitacionRepository.save(habitacion);
@@ -33,6 +37,8 @@ public class HabitacionService {
     public Habitacion actualizar(Long id, Habitacion habitacionActualizada) {
 
         validarEstadoHabitacion(habitacionActualizada.getEstadoHabitacion());
+
+        hotelClient.obtenerHotelPorId(habitacionActualizada.getIdHotel());
 
         Habitacion habitacionExistente = findById(id);
 
