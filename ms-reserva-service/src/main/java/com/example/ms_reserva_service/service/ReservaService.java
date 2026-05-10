@@ -67,6 +67,10 @@ public class ReservaService {
 
         validarHabitacionPerteneceAlHotel(reserva, habitacion);
 
+        validarEstadoHabitacion(habitacion);
+
+        validarCapacidadHabitacion(reserva, habitacion);
+
         reserva.setFechaCreacion(LocalDateTime.now());
 
         return reservaRepository.save(reserva);
@@ -85,6 +89,10 @@ public class ReservaService {
         HabitacionDTO habitacion = habitacionClient.obtenerHabitacionPorId(reservaActualizada.getIdHabitacion());
 
         validarHabitacionPerteneceAlHotel(reservaActualizada, habitacion);
+
+        validarEstadoHabitacion(habitacion);
+
+        validarCapacidadHabitacion(reservaActualizada, habitacion);
 
         Reserva reservaExistente = findById(id);
 
@@ -119,6 +127,27 @@ public class ReservaService {
             if (!reserva.getFechaFin().isAfter(reserva.getFechaInicio())) {
                 throw new IllegalArgumentException("La fechaFin debe ser posterior a la fechaInicio");
             }
+        }
+    }
+    private void validarEstadoHabitacion(HabitacionDTO habitacion) {
+
+        if (!habitacion.getEstadoHabitacion().equalsIgnoreCase("DISPONIBLE")) {
+
+            throw new IllegalArgumentException(
+                    "La habitación no está disponible para reservar"
+            );
+        }
+    }
+    private void validarCapacidadHabitacion(
+            Reserva reserva,
+            HabitacionDTO habitacion
+    ) {
+
+        if (reserva.getCantidadPersonas() > habitacion.getCapacidad()) {
+
+            throw new IllegalArgumentException(
+                    "La cantidad de personas excede la capacidad de la habitación"
+            );
         }
     }
 
