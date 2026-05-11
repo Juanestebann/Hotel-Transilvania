@@ -61,6 +61,7 @@ public class ReservaService {
 
         validarReservaCompleta(reserva);
 
+        reserva.setEstadoReserva(reserva.getEstadoReserva().toUpperCase());
         reserva.setFechaCreacion(LocalDateTime.now());
 
         Reserva reservaGuardada = reservaRepository.save(reserva);
@@ -85,7 +86,7 @@ public class ReservaService {
         reservaExistente.setFechaInicio(reservaActualizada.getFechaInicio());
         reservaExistente.setFechaFin(reservaActualizada.getFechaFin());
         reservaExistente.setCantidadPersonas(reservaActualizada.getCantidadPersonas());
-        reservaExistente.setEstadoReserva(reservaActualizada.getEstadoReserva());
+        reservaExistente.setEstadoReserva(reservaActualizada.getEstadoReserva().toUpperCase());
 
         Reserva reservaGuardada = reservaRepository.save(reservaExistente);
 
@@ -104,6 +105,8 @@ public class ReservaService {
     }
 
     private void validarReservaCompleta(Reserva reserva) {
+
+        validarEstadoReserva(reserva);
 
         validarFechas(reserva);
 
@@ -140,6 +143,19 @@ public class ReservaService {
             if (!reserva.getFechaFin().isAfter(reserva.getFechaInicio())) {
                 throw new IllegalArgumentException("La fechaFin debe ser posterior a la fechaInicio");
             }
+        }
+    }
+
+    private void validarEstadoReserva(Reserva reserva) {
+
+        if (!reserva.getEstadoReserva().equalsIgnoreCase("CONFIRMADA") &&
+                !reserva.getEstadoReserva().equalsIgnoreCase("PENDIENTE") &&
+                !reserva.getEstadoReserva().equalsIgnoreCase("CANCELADA") &&
+                !reserva.getEstadoReserva().equalsIgnoreCase("FINALIZADA")) {
+
+            throw new IllegalArgumentException(
+                    "EstadoReserva inválido. Use: CONFIRMADA, PENDIENTE, CANCELADA o FINALIZADA"
+            );
         }
     }
 
