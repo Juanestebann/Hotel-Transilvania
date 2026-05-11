@@ -1,15 +1,18 @@
 package com.example.ms_reserva_service.service;
 
 import com.example.ms_reserva_service.client.ClienteClient;
+import com.example.ms_reserva_service.client.DisponibilidadClient;
 import com.example.ms_reserva_service.client.HabitacionClient;
 import com.example.ms_reserva_service.client.HotelClient;
 import com.example.ms_reserva_service.client.UsuarioClient;
+import com.example.ms_reserva_service.dto.DisponibilidadDTO;
 import com.example.ms_reserva_service.dto.HabitacionDTO;
 import com.example.ms_reserva_service.model.Reserva;
 import com.example.ms_reserva_service.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -23,6 +26,7 @@ public class ReservaService {
     private final UsuarioClient usuarioClient;
     private final HabitacionClient habitacionClient;
     private final HotelClient hotelClient;
+    private final DisponibilidadClient disponibilidadClient;
 
     public List<Reserva> findAll() {
         return reservaRepository.findAll();
@@ -71,9 +75,15 @@ public class ReservaService {
 
         validarCapacidadHabitacion(reserva, habitacion);
 
+        validarDisponibilidadReserva(reserva);
+
         reserva.setFechaCreacion(LocalDateTime.now());
 
-        return reservaRepository.save(reserva);
+        Reserva reservaGuardada = reservaRepository.save(reserva);
+
+        marcarDisponibilidadComoOcupada(reservaGuardada);
+
+        return reservaGuardada;
     }
 
     public Reserva actualizar(Long id, Reserva reservaActualizada) {
@@ -94,6 +104,8 @@ public class ReservaService {
 
         validarCapacidadHabitacion(reservaActualizada, habitacion);
 
+        validarDisponibilidadReserva(reservaActualizada);
+
         Reserva reservaExistente = findById(id);
 
         reservaExistente.setIdCliente(reservaActualizada.getIdCliente());
@@ -108,6 +120,11 @@ public class ReservaService {
         return reservaRepository.save(reservaExistente);
     }
 
+    public void eliminar(Long id) {
+        Reserva reserva = findById(id);
+        reservaRepository.delete(reserva);
+    }
+
     private void validarHabitacionPerteneceAlHotel(Reserva reserva, HabitacionDTO habitacion) {
 
         if (!habitacion.getIdHotel().equals(reserva.getIdHotel())) {
@@ -117,11 +134,6 @@ public class ReservaService {
         }
     }
 
-    public void eliminar(Long id) {
-        Reserva reserva = findById(id);
-        reservaRepository.delete(reserva);
-    }
-
     private void validarFechas(Reserva reserva) {
         if (reserva.getFechaInicio() != null && reserva.getFechaFin() != null) {
             if (!reserva.getFechaFin().isAfter(reserva.getFechaInicio())) {
@@ -129,6 +141,7 @@ public class ReservaService {
             }
         }
     }
+
     private void validarEstadoHabitacion(HabitacionDTO habitacion) {
 
         if (!habitacion.getEstadoHabitacion().equalsIgnoreCase("DISPONIBLE")) {
@@ -138,10 +151,8 @@ public class ReservaService {
             );
         }
     }
-    private void validarCapacidadHabitacion(
-            Reserva reserva,
-            HabitacionDTO habitacion
-    ) {
+
+    private void validarCapacidadHabitacion(Reserva reserva, HabitacionDTO habitacion) {
 
         if (reserva.getCantidadPersonas() > habitacion.getCapacidad()) {
 
@@ -151,5 +162,48 @@ public class ReservaService {
         }
     }
 
+    private void validarDisponibilidadReserva(Reserva reserva) {
 
+        LocalDate fechaActual = reserva.getFechaInicio();
+
+        while (fechaActual.isBefore(reserva.getFechaFin())) {
+
+            DisponibilidadDTO disponibilidad =
+                    disponibilidadClient.obtenerDisponibilidadPorHabitacionYFecha(
+                            reserva.getIdHabitacion(),
+                            fechaActual
+                    );
+
+            if (!disponibilidad.getEstado().equalsIgnoreCase("DISPONIBLE")) {
+                throw new IllegalArgumentException(
+                        "La habitación no está disponible en la fecha " + fechaActual
+                );
+            }
+
+            fechaActual = fechaActual.plusDays(1);
+        }
+    }
+
+    private void marcarDisponibilidadComoOcupada(Reserva reserva) {
+
+        LocalDate fechaActual = reserva.getFechaInicio();
+
+        while (fechaActual.isBefore(reserva.getFechaFin())) {
+
+            DisponibilidadDTO disponibilidad =
+                    disponibilidadClient.obtenerDisponibilidadPorHabitacionYFecha(
+                            reserva.getIdHabitacion(),
+                            fechaActual
+                    );
+
+            disponibilidad.setEstado("OCUPADA");
+
+            disponibilidadClient.actualizarDisponibilidad(
+                    disponibilidad.getId(),
+                    disponibilidad
+            );
+
+            fechaActual = fechaActual.plusDays(1);
+        }
+    }
 }
