@@ -66,7 +66,9 @@ public class ReservaService {
 
         Reserva reservaGuardada = reservaRepository.save(reserva);
 
-        marcarDisponibilidadComoOcupada(reservaGuardada);
+        if (debeOcuparDisponibilidad(reservaGuardada)) {
+            marcarDisponibilidadComoOcupada(reservaGuardada);
+        }
 
         return reservaGuardada;
     }
@@ -90,7 +92,9 @@ public class ReservaService {
 
         Reserva reservaGuardada = reservaRepository.save(reservaExistente);
 
-        marcarDisponibilidadComoOcupada(reservaGuardada);
+        if (debeOcuparDisponibilidad(reservaGuardada)) {
+            marcarDisponibilidadComoOcupada(reservaGuardada);
+        }
 
         return reservaGuardada;
     }
@@ -126,7 +130,13 @@ public class ReservaService {
 
         validarCapacidadHabitacion(reserva, habitacion);
 
-        validarDisponibilidadReserva(reserva);
+        if (reserva.getEstadoReserva().equalsIgnoreCase("CONFIRMADA")) {
+            validarDisponibilidadReserva(reserva);
+        }
+    }
+
+    private boolean debeOcuparDisponibilidad(Reserva reserva) {
+        return reserva.getEstadoReserva().equalsIgnoreCase("CONFIRMADA");
     }
 
     private void validarHabitacionPerteneceAlHotel(Reserva reserva, HabitacionDTO habitacion) {
