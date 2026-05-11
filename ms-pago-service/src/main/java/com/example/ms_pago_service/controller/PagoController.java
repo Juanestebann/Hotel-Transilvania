@@ -1,6 +1,7 @@
 package com.example.ms_pago_service.controller;
 
 import com.example.ms_pago_service.model.Pago;
+import com.example.ms_pago_service.model.enums.EstadoPago;
 import com.example.ms_pago_service.service.PagoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +65,7 @@ public class PagoController {
 
     @GetMapping("/estado/{estadoPago}")
     public ResponseEntity<?> findByEstadoPago(
-            @PathVariable String estadoPago) {
+            @PathVariable EstadoPago estadoPago) {
 
         return ResponseEntity.ok(
                 pagoService.findByEstadoPago(estadoPago)

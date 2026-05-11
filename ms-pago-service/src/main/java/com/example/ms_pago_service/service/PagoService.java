@@ -1,6 +1,8 @@
 package com.example.ms_pago_service.service;
-
+import com.example.ms_pago_service.client.ReservaClient;
+import com.example.ms_pago_service.client.UsuarioClient;
 import com.example.ms_pago_service.model.Pago;
+import com.example.ms_pago_service.model.enums.EstadoPago;
 import com.example.ms_pago_service.repository.PagoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,8 @@ import java.util.NoSuchElementException;
 public class PagoService {
 
     private final PagoRepository pagoRepository;
+    private final ReservaClient reservaClient;
+    private final UsuarioClient usuarioClient;
 
     public List<Pago> findAll() {
         return pagoRepository.findAll();
@@ -25,9 +29,15 @@ public class PagoService {
     }
 
     public Pago save(Pago pago) {
-        if(pago.getMonto().doubleValue() <= 0){
+
+        if (pago.getMonto().doubleValue() <= 0) {
             throw new IllegalArgumentException("El monto debe ser mayor a 0");
         }
+
+        reservaClient.obtenerReservaPorId(pago.getReservaId());
+
+        usuarioClient.obtenerUsuarioPorId(pago.getIdUsuario());
+
         return pagoRepository.save(pago);
     }
 
@@ -35,7 +45,16 @@ public class PagoService {
 
         Pago pago = findById(id);
 
+        if (pagoActualizado.getMonto().doubleValue() <= 0) {
+            throw new IllegalArgumentException("El monto debe ser mayor a 0");
+        }
+
+        reservaClient.obtenerReservaPorId(pagoActualizado.getReservaId());
+
+        usuarioClient.obtenerUsuarioPorId(pagoActualizado.getIdUsuario());
+
         pago.setReservaId(pagoActualizado.getReservaId());
+        pago.setIdUsuario(pagoActualizado.getIdUsuario());
         pago.setMonto(pagoActualizado.getMonto());
         pago.setMetodoPago(pagoActualizado.getMetodoPago());
         pago.setEstadoPago(pagoActualizado.getEstadoPago());
@@ -55,7 +74,7 @@ public class PagoService {
         return pagoRepository.findByReservaId(reservaId);
     }
 
-    public List<Pago> findByEstadoPago(String estadoPago) {
+    public List<Pago> findByEstadoPago(EstadoPago estadoPago) {
         return pagoRepository.findByEstadoPago(estadoPago);
     }
 }
