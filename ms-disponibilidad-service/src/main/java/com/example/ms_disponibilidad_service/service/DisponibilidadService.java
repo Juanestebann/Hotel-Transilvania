@@ -25,6 +25,12 @@ public class DisponibilidadService {
         return disponibilidadRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Disponibilidad no encontrada con id: " + id));
     }
+    public Disponibilidad findByIdHabitacionAndFecha(Long idHabitacion, LocalDate fecha) {
+        return disponibilidadRepository.findByIdHabitacionAndFecha(idHabitacion, fecha)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No existe disponibilidad para la habitación " + idHabitacion + " en la fecha " + fecha
+                ));
+    }
 
     public Disponibilidad guardar(Disponibilidad disponibilidad) {
 

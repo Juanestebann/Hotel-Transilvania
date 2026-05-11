@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -23,6 +25,15 @@ public class DisponibilidadController {
     @GetMapping("/{id}")
     public ResponseEntity<Disponibilidad> findById(@PathVariable Long id) {
         return ResponseEntity.ok(disponibilidadService.findById(id));
+    }
+    @GetMapping("/habitacion/{idHabitacion}/fecha/{fecha}")
+    public ResponseEntity<Disponibilidad> findByIdHabitacionAndFecha(
+            @PathVariable Long idHabitacion,
+            @PathVariable LocalDate fecha) {
+
+        return ResponseEntity.ok(
+                disponibilidadService.findByIdHabitacionAndFecha(idHabitacion, fecha)
+        );
     }
 
     @PostMapping
