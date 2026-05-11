@@ -59,23 +59,7 @@ public class ReservaService {
 
     public Reserva guardar(Reserva reserva) {
 
-        validarFechas(reserva);
-
-        clienteClient.obtenerClientePorId(reserva.getIdCliente());
-
-        usuarioClient.obtenerUsuarioPorId(reserva.getIdUsuario());
-
-        hotelClient.obtenerHotelPorId(reserva.getIdHotel());
-
-        HabitacionDTO habitacion = habitacionClient.obtenerHabitacionPorId(reserva.getIdHabitacion());
-
-        validarHabitacionPerteneceAlHotel(reserva, habitacion);
-
-        validarEstadoHabitacion(habitacion);
-
-        validarCapacidadHabitacion(reserva, habitacion);
-
-        validarDisponibilidadReserva(reserva);
+        validarReservaCompleta(reserva);
 
         reserva.setFechaCreacion(LocalDateTime.now());
 
@@ -88,25 +72,11 @@ public class ReservaService {
 
     public Reserva actualizar(Long id, Reserva reservaActualizada) {
 
-        validarFechas(reservaActualizada);
-
-        clienteClient.obtenerClientePorId(reservaActualizada.getIdCliente());
-
-        usuarioClient.obtenerUsuarioPorId(reservaActualizada.getIdUsuario());
-
-        hotelClient.obtenerHotelPorId(reservaActualizada.getIdHotel());
-
-        HabitacionDTO habitacion = habitacionClient.obtenerHabitacionPorId(reservaActualizada.getIdHabitacion());
-
-        validarHabitacionPerteneceAlHotel(reservaActualizada, habitacion);
-
-        validarEstadoHabitacion(habitacion);
-
-        validarCapacidadHabitacion(reservaActualizada, habitacion);
-
-        validarDisponibilidadReserva(reservaActualizada);
-
         Reserva reservaExistente = findById(id);
+
+        liberarDisponibilidadReserva(reservaExistente);
+
+        validarReservaCompleta(reservaActualizada);
 
         reservaExistente.setIdCliente(reservaActualizada.getIdCliente());
         reservaExistente.setIdUsuario(reservaActualizada.getIdUsuario());
@@ -117,12 +87,43 @@ public class ReservaService {
         reservaExistente.setCantidadPersonas(reservaActualizada.getCantidadPersonas());
         reservaExistente.setEstadoReserva(reservaActualizada.getEstadoReserva());
 
-        return reservaRepository.save(reservaExistente);
+        Reserva reservaGuardada = reservaRepository.save(reservaExistente);
+
+        marcarDisponibilidadComoOcupada(reservaGuardada);
+
+        return reservaGuardada;
     }
 
     public void eliminar(Long id) {
+
         Reserva reserva = findById(id);
+
+        liberarDisponibilidadReserva(reserva);
+
         reservaRepository.delete(reserva);
+    }
+
+    private void validarReservaCompleta(Reserva reserva) {
+
+        validarFechas(reserva);
+
+        clienteClient.obtenerClientePorId(reserva.getIdCliente());
+
+        usuarioClient.obtenerUsuarioPorId(reserva.getIdUsuario());
+
+        hotelClient.obtenerHotelPorId(reserva.getIdHotel());
+
+        HabitacionDTO habitacion = habitacionClient.obtenerHabitacionPorId(
+                reserva.getIdHabitacion()
+        );
+
+        validarHabitacionPerteneceAlHotel(reserva, habitacion);
+
+        validarEstadoHabitacion(habitacion);
+
+        validarCapacidadHabitacion(reserva, habitacion);
+
+        validarDisponibilidadReserva(reserva);
     }
 
     private void validarHabitacionPerteneceAlHotel(Reserva reserva, HabitacionDTO habitacion) {
@@ -145,7 +146,6 @@ public class ReservaService {
     private void validarEstadoHabitacion(HabitacionDTO habitacion) {
 
         if (!habitacion.getEstadoHabitacion().equalsIgnoreCase("DISPONIBLE")) {
-
             throw new IllegalArgumentException(
                     "La habitación no está disponible para reservar"
             );
@@ -155,7 +155,6 @@ public class ReservaService {
     private void validarCapacidadHabitacion(Reserva reserva, HabitacionDTO habitacion) {
 
         if (reserva.getCantidadPersonas() > habitacion.getCapacidad()) {
-
             throw new IllegalArgumentException(
                     "La cantidad de personas excede la capacidad de la habitación"
             );
@@ -197,6 +196,29 @@ public class ReservaService {
                     );
 
             disponibilidad.setEstado("OCUPADA");
+
+            disponibilidadClient.actualizarDisponibilidad(
+                    disponibilidad.getId(),
+                    disponibilidad
+            );
+
+            fechaActual = fechaActual.plusDays(1);
+        }
+    }
+
+    private void liberarDisponibilidadReserva(Reserva reserva) {
+
+        LocalDate fechaActual = reserva.getFechaInicio();
+
+        while (fechaActual.isBefore(reserva.getFechaFin())) {
+
+            DisponibilidadDTO disponibilidad =
+                    disponibilidadClient.obtenerDisponibilidadPorHabitacionYFecha(
+                            reserva.getIdHabitacion(),
+                            fechaActual
+                    );
+
+            disponibilidad.setEstado("DISPONIBLE");
 
             disponibilidadClient.actualizarDisponibilidad(
                     disponibilidad.getId(),
