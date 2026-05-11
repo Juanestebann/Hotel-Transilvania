@@ -10,6 +10,9 @@ public interface ServicioAdicionalRepository extends JpaRepository<ServicioAdici
     // Obtener servicios adicionales por idHotel
     List<ServicioAdicionalModel> findByIdHotel(Long idHotel);
 
+    // Obtener servicios adicionales por idReserva
+    List<ServicioAdicionalModel> findByIdReserva(Long idReserva);
+
     // Obtener servicios adicionales por estado
     List<ServicioAdicionalModel> findByEstado(String estado);
 

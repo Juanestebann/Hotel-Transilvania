@@ -18,14 +18,23 @@ public class ServicioAdicionalController {
     @GetMapping
     public ResponseEntity<?> findAll(
             @RequestParam(required = false) Long idHotel,
+            @RequestParam(required = false) Long idReserva,
             @RequestParam(required = false) String estado,
             @RequestParam(required = false) String nombre
+
     ) {
         //http://localhost:8090/api/v1/servicios-adicionales?idHotel=1
         if (idHotel != null) {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(servicioAdicionalService.findByIdHotel(idHotel));
         }
+
+        //http://localhost:8090/api/v1/servicios-adicionales?idReserva=1
+        if (idReserva != null) {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(servicioAdicionalService.findByIdReserva(idReserva));
+        }
+
         //http://localhost:8090/api/v1/servicios-adicionales?estado=ACTIVO
         if (estado != null) {
             return ResponseEntity.status(HttpStatus.OK)

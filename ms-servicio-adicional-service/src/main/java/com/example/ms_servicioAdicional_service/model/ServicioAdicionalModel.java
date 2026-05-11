@@ -25,6 +25,9 @@ public class ServicioAdicionalModel {
     @NotNull(message = "El campo idHotel es obligatorio")
     private Long idHotel;
 
+    @Column(nullable = true)
+    private Long idReserva;
+
     @Column(nullable = false, length = 100)
     @NotBlank(message = "El campo nombre es obligatorio")
     private String nombre;
