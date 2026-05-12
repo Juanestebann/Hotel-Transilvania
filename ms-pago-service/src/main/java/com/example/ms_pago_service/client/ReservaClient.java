@@ -37,4 +37,27 @@ public class ReservaClient {
                 .bodyToMono(ReservaDTO.class)
                 .block();
     }
+    public ReservaDTO cambiarEstadoReserva(Long idReserva, String estadoReserva) {
+
+        return webClientBuilder
+                .baseUrl("http://localhost:8086/api/v1/reservas")
+                .build()
+                .patch()
+                .uri("/{id}/estado?estadoReserva={estado}", idReserva, estadoReserva)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, response ->
+                        Mono.error(new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "No se pudo actualizar la reserva con id: " + idReserva
+                        ))
+                )
+                .onStatus(HttpStatusCode::is5xxServerError, response ->
+                        Mono.error(new ResponseStatusException(
+                                HttpStatus.SERVICE_UNAVAILABLE,
+                                "Error al comunicarse con ms-reserva-service"
+                        ))
+                )
+                .bodyToMono(ReservaDTO.class)
+                .block();
+    }
 }

@@ -34,9 +34,13 @@ public class PagoService {
 
         validarEstadoPago(pago.getEstadoPago());
 
+        pago.setEstadoPago(pago.getEstadoPago().toUpperCase());
+
         reservaClient.obtenerReservaPorId(pago.getReservaId());
 
         usuarioClient.obtenerUsuarioPorId(pago.getIdUsuario());
+
+        actualizarEstadoReservaSegunPago(pago);
 
         return pagoRepository.save(pago);
     }
@@ -59,6 +63,8 @@ public class PagoService {
         pago.setMetodoPago(pagoActualizado.getMetodoPago());
         pago.setEstadoPago(pagoActualizado.getEstadoPago().toUpperCase());
         pago.setFechaPago(pagoActualizado.getFechaPago());
+
+        actualizarEstadoReservaSegunPago(pago);
 
         return pagoRepository.save(pago);
     }
@@ -94,9 +100,31 @@ public class PagoService {
                 !estado.equals("RECHAZADO") &&
                 !estado.equals("REEMBOLSADO") &&
                 !estado.equals("ANULADO")) {
+
             throw new IllegalArgumentException(
                     "Estado de pago inválido. Debe ser PENDIENTE, APROBADO, RECHAZADO, REEMBOLSADO o ANULADO"
             );
+        }
+    }
+
+    private void actualizarEstadoReservaSegunPago(Pago pago) {
+
+        String estadoPago = pago.getEstadoPago().toUpperCase();
+
+        if (estadoPago.equals("APROBADO")) {
+            reservaClient.cambiarEstadoReserva(pago.getReservaId(), "CONFIRMADA");
+        }
+
+        if (estadoPago.equals("RECHAZADO")) {
+            reservaClient.cambiarEstadoReserva(pago.getReservaId(), "CANCELADA");
+        }
+
+        if (estadoPago.equals("REEMBOLSADO")) {
+            reservaClient.cambiarEstadoReserva(pago.getReservaId(), "CANCELADA");
+        }
+
+        if (estadoPago.equals("PENDIENTE")) {
+            reservaClient.cambiarEstadoReserva(pago.getReservaId(), "PENDIENTE");
         }
     }
 }
