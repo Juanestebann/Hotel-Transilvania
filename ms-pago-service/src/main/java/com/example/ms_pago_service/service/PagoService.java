@@ -1,8 +1,8 @@
 package com.example.ms_pago_service.service;
+
 import com.example.ms_pago_service.client.ReservaClient;
 import com.example.ms_pago_service.client.UsuarioClient;
 import com.example.ms_pago_service.model.Pago;
-import com.example.ms_pago_service.model.enums.EstadoPago;
 import com.example.ms_pago_service.repository.PagoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,9 +30,9 @@ public class PagoService {
 
     public Pago save(Pago pago) {
 
-        if (pago.getMonto().doubleValue() <= 0) {
-            throw new IllegalArgumentException("El monto debe ser mayor a 0");
-        }
+        validarMonto(pago);
+
+        validarEstadoPago(pago.getEstadoPago());
 
         reservaClient.obtenerReservaPorId(pago.getReservaId());
 
@@ -45,9 +45,9 @@ public class PagoService {
 
         Pago pago = findById(id);
 
-        if (pagoActualizado.getMonto().doubleValue() <= 0) {
-            throw new IllegalArgumentException("El monto debe ser mayor a 0");
-        }
+        validarMonto(pagoActualizado);
+
+        validarEstadoPago(pagoActualizado.getEstadoPago());
 
         reservaClient.obtenerReservaPorId(pagoActualizado.getReservaId());
 
@@ -57,16 +57,14 @@ public class PagoService {
         pago.setIdUsuario(pagoActualizado.getIdUsuario());
         pago.setMonto(pagoActualizado.getMonto());
         pago.setMetodoPago(pagoActualizado.getMetodoPago());
-        pago.setEstadoPago(pagoActualizado.getEstadoPago());
+        pago.setEstadoPago(pagoActualizado.getEstadoPago().toUpperCase());
         pago.setFechaPago(pagoActualizado.getFechaPago());
 
         return pagoRepository.save(pago);
     }
 
     public void delete(Long id) {
-
         Pago pago = findById(id);
-
         pagoRepository.delete(pago);
     }
 
@@ -74,7 +72,31 @@ public class PagoService {
         return pagoRepository.findByReservaId(reservaId);
     }
 
-    public List<Pago> findByEstadoPago(EstadoPago estadoPago) {
-        return pagoRepository.findByEstadoPago(estadoPago);
+    public List<Pago> findByEstadoPago(String estadoPago) {
+        return pagoRepository.findByEstadoPago(estadoPago.toUpperCase());
+    }
+
+    private void validarMonto(Pago pago) {
+        if (pago.getMonto() == null || pago.getMonto().doubleValue() <= 0) {
+            throw new IllegalArgumentException("El monto debe ser mayor a 0");
+        }
+    }
+
+    private void validarEstadoPago(String estadoPago) {
+        if (estadoPago == null || estadoPago.isBlank()) {
+            throw new IllegalArgumentException("El estado del pago no puede estar vacío");
+        }
+
+        String estado = estadoPago.toUpperCase();
+
+        if (!estado.equals("PENDIENTE") &&
+                !estado.equals("APROBADO") &&
+                !estado.equals("RECHAZADO") &&
+                !estado.equals("REEMBOLSADO") &&
+                !estado.equals("ANULADO")) {
+            throw new IllegalArgumentException(
+                    "Estado de pago inválido. Debe ser PENDIENTE, APROBADO, RECHAZADO, REEMBOLSADO o ANULADO"
+            );
+        }
     }
 }

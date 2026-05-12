@@ -1,6 +1,5 @@
 package com.example.ms_pago_service.model;
 
-import com.example.ms_pago_service.model.enums.EstadoPago;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -35,9 +34,8 @@ public class Pago {
     @NotBlank(message = "El método de pago no puede estar vacío")
     private String metodoPago;
 
-    @Enumerated(EnumType.STRING)
-    @NotNull(message = "El estado del pago no puede ser nulo")
-    private EstadoPago estadoPago;
+    @NotBlank(message = "El estado del pago no puede estar vacío")
+    private String estadoPago;
 
     @NotNull(message = "La fecha de pago no puede ser nula")
     private LocalDateTime fechaPago;

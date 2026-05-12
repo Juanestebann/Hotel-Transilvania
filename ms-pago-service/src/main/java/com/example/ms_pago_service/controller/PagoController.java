@@ -1,7 +1,6 @@
 package com.example.ms_pago_service.controller;
 
 import com.example.ms_pago_service.model.Pago;
-import com.example.ms_pago_service.model.enums.EstadoPago;
 import com.example.ms_pago_service.service.PagoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -55,8 +54,7 @@ public class PagoController {
     }
 
     @GetMapping("/reserva/{reservaId}")
-    public ResponseEntity<?> findByReservaId(
-            @PathVariable Long reservaId) {
+    public ResponseEntity<?> findByReservaId(@PathVariable Long reservaId) {
 
         return ResponseEntity.ok(
                 pagoService.findByReservaId(reservaId)
@@ -64,8 +62,7 @@ public class PagoController {
     }
 
     @GetMapping("/estado/{estadoPago}")
-    public ResponseEntity<?> findByEstadoPago(
-            @PathVariable EstadoPago estadoPago) {
+    public ResponseEntity<?> findByEstadoPago(@PathVariable String estadoPago) {
 
         return ResponseEntity.ok(
                 pagoService.findByEstadoPago(estadoPago)

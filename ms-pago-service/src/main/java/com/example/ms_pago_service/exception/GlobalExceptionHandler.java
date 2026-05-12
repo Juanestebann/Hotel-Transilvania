@@ -7,7 +7,6 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -90,7 +89,7 @@ public class GlobalExceptionHandler {
 
         error.put("timestamp", LocalDateTime.now());
         error.put("status", HttpStatus.BAD_REQUEST.value());
-        error.put("message", "Valor inválido en EstadoPago");
+        error.put("message", "JSON inválido. Revisa los datos enviados.");
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
@@ -105,17 +104,5 @@ public class GlobalExceptionHandler {
         error.put("message", "Error interno del servidor");
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-    }
-
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<?> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-
-        Map<String, Object> error = new HashMap<>();
-
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.BAD_REQUEST.value());
-        error.put("message", "Valor inválido en la URL. Verifica que estadoPago sea: PENDIENTE, APROBADO, RECHAZADO, REEMBOLSADO o ANULADO");
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 }
