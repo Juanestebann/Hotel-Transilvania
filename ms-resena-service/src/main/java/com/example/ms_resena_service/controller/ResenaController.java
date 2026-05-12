@@ -57,6 +57,11 @@ public class ResenaController {
         return ResponseEntity.ok(resenaService.buscarPorHotel(idHotel));
     }
 
+    @GetMapping("/habitacion/{idHabitacion}")
+    public ResponseEntity<List<Resena>> buscarPorHabitacion(@PathVariable Long idHabitacion) {
+        return ResponseEntity.ok(resenaService.buscarPorHabitacion(idHabitacion));
+    }
+
     @GetMapping("/reserva/{idReserva}")
     public ResponseEntity<List<Resena>> buscarPorReserva(@PathVariable Long idReserva) {
         return ResponseEntity.ok(resenaService.buscarPorReserva(idReserva));

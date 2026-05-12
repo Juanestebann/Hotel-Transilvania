@@ -28,6 +28,10 @@ public class Resena {
     @Column(name = "id_hotel", nullable = false)
     private Long idHotel;
 
+    @NotNull(message = "El idHabitacion es obligatorio")
+    @Column(name = "id_habitacion", nullable = false)
+    private Long idHabitacion;
+
     @NotNull(message = "El idReserva es obligatorio")
     @Column(name = "id_reserva", nullable = false)
     private Long idReserva;

@@ -11,6 +11,8 @@ public interface ResenaRepository extends JpaRepository<Resena, Long> {
 
     List<Resena> findByIdHotel(Long idHotel);
 
+    List<Resena> findByIdHabitacion(Long idHabitacion);
+
     List<Resena> findByIdReserva(Long idReserva);
 
     List<Resena> findByCalificacion(Integer calificacion);
