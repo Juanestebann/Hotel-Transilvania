@@ -254,4 +254,12 @@ public class ReservaService {
             fechaActual = fechaActual.plusDays(1);
         }
     }
+    public Reserva cambiarEstado(Long id, String estadoReserva) {
+
+        Reserva reserva = findById(id);
+
+        reserva.setEstadoReserva(estadoReserva.toUpperCase());
+
+        return reservaRepository.save(reserva);
+    }
 }

@@ -76,4 +76,13 @@ public class ReservaController {
         reservaService.eliminar(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<Reserva> cambiarEstado(
+            @PathVariable Long id,
+            @RequestParam String estadoReserva) {
+
+        Reserva reservaActualizada = reservaService.cambiarEstado(id, estadoReserva);
+
+        return ResponseEntity.ok(reservaActualizada);
+    }
 }
