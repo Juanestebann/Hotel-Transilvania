@@ -3,11 +3,13 @@ package com.example.ms_auth_usuarios_service.service;
 import com.example.ms_auth_usuarios_service.model.Usuario;
 import com.example.ms_auth_usuarios_service.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
@@ -15,39 +17,63 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
 
     public List<Usuario> findAll() {
+        log.info("Listando todos los usuarios");
         return usuarioRepository.findAll();
     }
 
     public Usuario findById(Long id) {
+        log.info("Buscando usuario con id: {}", id);
+
         return usuarioRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado con id: " + id));
+                .orElseThrow(() -> {
+                    log.error("Usuario no encontrado con id: {}", id);
+                    return new NoSuchElementException("Usuario no encontrado con id: " + id);
+                });
     }
 
     public List<Usuario> findByRol(String rol) {
+        log.info("Buscando usuarios con rol: {}", rol);
         return usuarioRepository.findByRol(rol);
     }
 
     public Usuario save(Usuario usuario) {
+        log.info("Intentando crear usuario con nombre: {} y rol: {}", usuario.getNombre(), usuario.getRol());
 
         if (usuario.getIdUsuario() != null) {
+            log.warn("Intento inválido de crear usuario enviando idUsuario: {}", usuario.getIdUsuario());
             throw new IllegalArgumentException("No debe enviar idUsuario al crear un usuario");
         }
 
-        return usuarioRepository.save(usuario);
+        Usuario usuarioGuardado = usuarioRepository.save(usuario);
+
+        log.info("Usuario creado correctamente con id: {}", usuarioGuardado.getIdUsuario());
+
+        return usuarioGuardado;
     }
 
     public Usuario update(Long id, Usuario usuario) {
+        log.info("Actualizando usuario con id: {}", id);
+
         Usuario usuarioExistente = findById(id);
 
         usuarioExistente.setNombre(usuario.getNombre());
         usuarioExistente.setPassword(usuario.getPassword());
         usuarioExistente.setRol(usuario.getRol());
 
-        return usuarioRepository.save(usuarioExistente);
+        Usuario usuarioActualizado = usuarioRepository.save(usuarioExistente);
+
+        log.info("Usuario actualizado correctamente con id: {}", usuarioActualizado.getIdUsuario());
+
+        return usuarioActualizado;
     }
 
     public void delete(Long id) {
+        log.warn("Solicitando eliminación de usuario con id: {}", id);
+
         Usuario usuario = findById(id);
+
         usuarioRepository.delete(usuario);
+
+        log.warn("Usuario eliminado correctamente con id: {}", id);
     }
 }
