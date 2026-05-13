@@ -4,7 +4,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9bd66620-8bbf-4b52-95bf-8328cc87f463" name="Changes" comment="" />
+    <list default="true" id="9bd66620-8bbf-4b52-95bf-8328cc87f463" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/resources/logback-spring.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-disponibilidad-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-disponibilidad-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-disponibilidad-service/src/main/java/com/example/ms_disponibilidad_service/service/DisponibilidadService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-disponibilidad-service/src/main/java/com/example/ms_disponibilidad_service/service/DisponibilidadService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-disponibilidad-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-disponibilidad-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-habitacion-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-habitacion-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-habitacion-service/src/main/java/com/example/ms_habitacion_service/service/HabitacionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-habitacion-service/src/main/java/com/example/ms_habitacion_service/service/HabitacionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-habitacion-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-habitacion-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-habitacion-service/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-habitacion-service/target/classes/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-habitacion-service/target/classes/com/example/ms_habitacion_service/service/HabitacionService.class" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-habitacion-service/target/classes/com/example/ms_habitacion_service/service/HabitacionService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/ms_notificacion_service/service/NotificacionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/ms_notificacion_service/service/NotificacionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,6 +33,9 @@
       </list>
     </option>
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
@@ -30,6 +48,9 @@
   &quot;associatedIndex&quot;: 2
 }</component>
   <component name="ProjectId" id="3DIBLdIAxSReLQ0xut71z0b2IYF" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -42,8 +63,11 @@
     &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
     &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
     &quot;Spring Boot.MsNotificacionServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
@@ -55,7 +79,7 @@
 }</component>
   <component name="RunManager">
     <configuration name="MsNotificacionServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-      <module name="ms-notificacion-service" />
+      <module name="ms-hotel-service" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.example.ms_notificacion_service.MsNotificacionServiceApplication" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -82,6 +106,7 @@
       <workItem from="1778008432955" duration="1175000" />
       <workItem from="1778021695895" duration="3157000" />
       <workItem from="1778024927504" duration="6000" />
+      <workItem from="1778688614643" duration="2167000" />
     </task>
     <servers />
   </component>

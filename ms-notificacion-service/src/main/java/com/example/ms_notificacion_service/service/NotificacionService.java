@@ -6,11 +6,13 @@ import com.example.ms_notificacion_service.client.UsuarioClient;
 import com.example.ms_notificacion_service.model.Notificacion;
 import com.example.ms_notificacion_service.repository.NotificacionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificacionService {
@@ -20,58 +22,83 @@ public class NotificacionService {
     private final UsuarioClient usuarioClient;
     private final ReservaClient reservaClient;
 
-    // Obtener todas las notificaciones
     public List<Notificacion> findAll() {
+        log.info("Listando notificaciones");
         return notificacionRepository.findAll();
     }
 
-    // Obtener notificación por id
     public Notificacion findById(Long id) {
+        log.info("Buscando notificación con id: {}", id);
+
         return notificacionRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Notificación no encontrada con id: " + id));
+                .orElseThrow(() -> {
+                    log.error("Notificación no encontrada con id: {}", id);
+                    return new NoSuchElementException("Notificación no encontrada con id: " + id);
+                });
     }
 
-    // Obtener notificaciones por idCliente
     public List<Notificacion> findByIdCliente(Long idCliente) {
+        log.info("Buscando notificaciones por idCliente: {}", idCliente);
         return notificacionRepository.findByIdCliente(idCliente);
     }
 
-    // Obtener notificaciones por idUsuario
     public List<Notificacion> findByIdUsuario(Long idUsuario) {
+        log.info("Buscando notificaciones por idUsuario: {}", idUsuario);
         return notificacionRepository.findByIdUsuario(idUsuario);
     }
 
-    // Obtener notificaciones por idReserva
     public List<Notificacion> findByIdReserva(Long idReserva) {
+        log.info("Buscando notificaciones por idReserva: {}", idReserva);
         return notificacionRepository.findByIdReserva(idReserva);
     }
 
-    // Guardar notificación validando cliente, usuario y reserva
     public Notificacion guardar(Notificacion notificacion) {
 
-        // Validar cliente existente
+        log.info("Registrando notificación tipo: {}", notificacion.getTipo());
+
+        log.info(
+                "Notificación asociada a cliente: {}, usuario: {}, reserva: {}",
+                notificacion.getIdCliente(),
+                notificacion.getIdUsuario(),
+                notificacion.getIdReserva()
+        );
+
+        log.info("Validando cliente con id: {}", notificacion.getIdCliente());
         clienteClient.obtenerClientePorId(notificacion.getIdCliente());
 
-        // Validar usuario existente
+        log.info("Validando usuario con id: {}", notificacion.getIdUsuario());
         usuarioClient.obtenerUsuarioPorId(notificacion.getIdUsuario());
 
-        // Validar reserva existente
+        log.info("Validando reserva con id: {}", notificacion.getIdReserva());
         reservaClient.obtenerReservaPorId(notificacion.getIdReserva());
 
-        return notificacionRepository.save(notificacion);
+        Notificacion notificacionGuardada = notificacionRepository.save(notificacion);
+
+        log.info("Notificación registrada correctamente con id: {}", notificacionGuardada.getId());
+
+        return notificacionGuardada;
     }
 
-    // Actualizar notificación validando cliente, usuario y reserva
     public Notificacion actualizar(Long id, Notificacion notificacionActualizada) {
+
+        log.info("Actualizando notificación con id: {}", id);
+
         Notificacion existente = findById(id);
 
-        // Validar cliente existente
+        log.info(
+                "Nueva asociación de notificación a cliente: {}, usuario: {}, reserva: {}",
+                notificacionActualizada.getIdCliente(),
+                notificacionActualizada.getIdUsuario(),
+                notificacionActualizada.getIdReserva()
+        );
+
+        log.info("Validando cliente con id: {}", notificacionActualizada.getIdCliente());
         clienteClient.obtenerClientePorId(notificacionActualizada.getIdCliente());
 
-        // Validar usuario existente
+        log.info("Validando usuario con id: {}", notificacionActualizada.getIdUsuario());
         usuarioClient.obtenerUsuarioPorId(notificacionActualizada.getIdUsuario());
 
-        // Validar reserva existente
+        log.info("Validando reserva con id: {}", notificacionActualizada.getIdReserva());
         reservaClient.obtenerReservaPorId(notificacionActualizada.getIdReserva());
 
         existente.setIdCliente(notificacionActualizada.getIdCliente());
@@ -82,12 +109,21 @@ public class NotificacionService {
         existente.setEstado(notificacionActualizada.getEstado());
         existente.setFechaEnvio(notificacionActualizada.getFechaEnvio());
 
-        return notificacionRepository.save(existente);
+        Notificacion notificacionGuardada = notificacionRepository.save(existente);
+
+        log.info("Notificación actualizada correctamente con id: {}", notificacionGuardada.getId());
+
+        return notificacionGuardada;
     }
 
-    // Eliminar notificación por id
     public void eliminar(Long id) {
+
+        log.warn("Eliminando notificación con id: {}", id);
+
         Notificacion notificacion = findById(id);
+
         notificacionRepository.delete(notificacion);
+
+        log.info("Notificación eliminada correctamente con id: {}", id);
     }
 }
