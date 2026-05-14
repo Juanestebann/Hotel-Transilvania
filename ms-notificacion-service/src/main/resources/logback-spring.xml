@@ -19,13 +19,16 @@
     <appender name="JSON_FILE"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
 
-        <file>logs/${APP_NAME}.json</file>
+        <file>${APP_NAME}/logs/${APP_NAME}.json</file>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+
             <fileNamePattern>
-                logs/${APP_NAME}.%d{yyyy-MM-dd}.json
+                ${APP_NAME}/logs/${APP_NAME}.%d{yyyy-MM-dd}.json
             </fileNamePattern>
+
             <maxHistory>7</maxHistory>
+
         </rollingPolicy>
 
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
