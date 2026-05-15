@@ -16,39 +16,40 @@ import java.util.List;
 public class HotelController {
 
     private final HotelService hotelService;
-
+    //http://localhost:8083/api/v1/hoteles
     @GetMapping
     public ResponseEntity<List<Hotel>> findAll() {
         return ResponseEntity.ok(hotelService.findAll());
     }
-
+    //http://localhost:8083/api/v1/hoteles/1
+    //http://localhost:8083/api/v1/hoteles/12312
     @GetMapping("/{id}")
     public ResponseEntity<Hotel> findById(@PathVariable Long id) {
         return ResponseEntity.ok(hotelService.findById(id));
     }
-
+    //http://localhost:8083/api/v1/hoteles?categoria=5 estrellas
     @GetMapping(params = "categoria")
     public ResponseEntity<List<Hotel>> findByCategoria(@RequestParam String categoria) {
         return ResponseEntity.ok(hotelService.findByCategoria(categoria));
     }
-
+    //http://localhost:8083/api/v1/hoteles?ciudad=Santiago
     @GetMapping(params = "ciudad")
     public ResponseEntity<List<Hotel>> findByCiudad(@RequestParam String ciudad) {
         return ResponseEntity.ok(hotelService.findByCiudad(ciudad));
     }
-
+    //http://localhost:8083/api/v1/hoteles?pais=Chile
     @GetMapping(params = "pais")
     public ResponseEntity<List<Hotel>> findByPais(@RequestParam String pais) {
         return ResponseEntity.ok(hotelService.findByPais(pais));
     }
-
+    //http://localhost:8083/api/v1/hoteles
     @PostMapping
     public ResponseEntity<Hotel> guardarHotel(@Valid @RequestBody Hotel hotel) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(hotelService.guardar(hotel));
     }
-
+    //http://localhost:8083/api/v1/hoteles/1
     @PutMapping("/{id}")
     public ResponseEntity<Hotel> actualizarHotel(
             @PathVariable Long id,
@@ -56,7 +57,7 @@ public class HotelController {
 
         return ResponseEntity.ok(hotelService.actualizarHotel(id, hotel));
     }
-
+    //http://localhost:8083/api/v1/hoteles/6
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarHotel(@PathVariable Long id) {
         hotelService.eliminar(id);

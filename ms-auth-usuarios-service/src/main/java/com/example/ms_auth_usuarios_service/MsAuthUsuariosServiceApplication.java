@@ -9,5 +9,4 @@ public class MsAuthUsuariosServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(MsAuthUsuariosServiceApplication.class, args);
 	}
-
 }

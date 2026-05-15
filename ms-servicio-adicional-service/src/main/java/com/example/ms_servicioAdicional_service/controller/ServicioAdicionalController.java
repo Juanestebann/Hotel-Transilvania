@@ -15,6 +15,11 @@ public class ServicioAdicionalController {
 
     private final ServicioAdicionalService servicioAdicionalService;
 
+    // http://localhost:8090/api/v1/servicios-adicionales
+    // http://localhost:8090/api/v1/servicios-adicionales?idHotel=1
+    // http://localhost:8090/api/v1/servicios-adicionales?idReserva=1
+    // http://localhost:8090/api/v1/servicios-adicionales?estado=ACTIVO
+    // http://localhost:8090/api/v1/servicios-adicionales?nombre=SPA
     @GetMapping
     public ResponseEntity<?> findAll(
             @RequestParam(required = false) Long idHotel,
@@ -23,24 +28,22 @@ public class ServicioAdicionalController {
             @RequestParam(required = false) String nombre
 
     ) {
-        //http://localhost:8090/api/v1/servicios-adicionales?idHotel=1
+
         if (idHotel != null) {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(servicioAdicionalService.findByIdHotel(idHotel));
         }
 
-        //http://localhost:8090/api/v1/servicios-adicionales?idReserva=1
         if (idReserva != null) {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(servicioAdicionalService.findByIdReserva(idReserva));
         }
 
-        //http://localhost:8090/api/v1/servicios-adicionales?estado=ACTIVO
         if (estado != null) {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(servicioAdicionalService.findByEstado(estado));
         }
-        //http://localhost:8090/api/v1/servicios-adicionales?nombre=SPA
+
         if (nombre != null) {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(servicioAdicionalService.findByNombre(nombre));
@@ -50,16 +53,20 @@ public class ServicioAdicionalController {
                 .body(servicioAdicionalService.findAll());
     }
 
-    //http://localhost:8090/api/v1/servicios-adicionales/1
+    // http://localhost:8090/api/v1/servicios-adicionales/1
     @GetMapping("/{id}")
-    public ResponseEntity<ServicioAdicionalModel> findById(@PathVariable Long id) {
+    public ResponseEntity<ServicioAdicionalModel> findById(
+            @PathVariable Long id
+    ) {
 
-        ServicioAdicionalModel servicio = servicioAdicionalService.findById(id);
+        ServicioAdicionalModel servicio =
+                servicioAdicionalService.findById(id);
 
-        return ResponseEntity.status(HttpStatus.OK).body(servicio);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(servicio);
     }
 
-
+    // http://localhost:8090/api/v1/servicios-adicionales
     @PostMapping
     public ResponseEntity<ServicioAdicionalModel> guardarServicio(
             @Valid @RequestBody ServicioAdicionalModel servicioAdicional
@@ -72,7 +79,7 @@ public class ServicioAdicionalController {
                 .body(nuevoServicio);
     }
 
-
+    // http://localhost:8090/api/v1/servicios-adicionales/1
     @PutMapping("/{id}")
     public ResponseEntity<ServicioAdicionalModel> actualizarServicio(
             @PathVariable Long id,
@@ -86,12 +93,15 @@ public class ServicioAdicionalController {
                 .body(servicioActualizado);
     }
 
-
+    // http://localhost:8090/api/v1/servicios-adicionales/1
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarServicio(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminarServicio(
+            @PathVariable Long id
+    ) {
 
         servicioAdicionalService.eliminar(id);
 
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .build();
     }
 }

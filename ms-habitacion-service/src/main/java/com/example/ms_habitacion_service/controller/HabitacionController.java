@@ -15,16 +15,18 @@ import java.util.List;
 public class HabitacionController {
 
     private final HabitacionService habitacionService;
-
+    //http://localhost:8084/api/v1/habitaciones
     @GetMapping
     public ResponseEntity<List<Habitacion>> findAll() {
         return ResponseEntity.status(HttpStatus.OK).body(habitacionService.findAll());
     }
-
+    //http://localhost:8084/api/v1/habitaciones/1
+    //http://localhost:8084/api/v1/habitaciones/9999
     @GetMapping("/{id}")
     public ResponseEntity<Habitacion> findById(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(habitacionService.findById(id));
     }
+    //http://localhost:8084/api/v1/habitaciones/estado/DISPONIBLE
     @GetMapping("/estado/{estadoHabitacion}")
     public ResponseEntity<List<Habitacion>> findByEstadoHabitacion(
             @PathVariable String estadoHabitacion) {
@@ -33,7 +35,7 @@ public class HabitacionController {
                 habitacionService.findByEstadoHabitacion(estadoHabitacion)
         );
     }
-
+    //http://localhost:8084/api/v1/habitaciones/capacidad/2 --> Capacidad minima
     @GetMapping("/capacidad/{capacidad}")
     public ResponseEntity<List<Habitacion>> findByCapacidadMinima(
             @PathVariable Integer capacidad) {
@@ -42,7 +44,7 @@ public class HabitacionController {
                 habitacionService.findByCapacidadMinima(capacidad)
         );
     }
-
+    //http://localhost:8084/api/v1/habitaciones/hotel/1
     @GetMapping("/hotel/{idHotel}")
     public ResponseEntity<List<Habitacion>> findByIdHotel(
             @PathVariable Long idHotel) {
@@ -51,18 +53,19 @@ public class HabitacionController {
                 habitacionService.findByIdHotel(idHotel)
         );
     }
-
+    //http://localhost:8084/api/v1/habitaciones
     @PostMapping
     public ResponseEntity<Habitacion> guardarHabitacion(@Valid @RequestBody Habitacion habitacion) {
         return ResponseEntity.status(HttpStatus.CREATED).body(habitacionService.guardar(habitacion));
     }
-
+    //http://localhost:8084/api/v1/habitaciones/1
     @PutMapping("/{id}")
     public ResponseEntity<Habitacion> actualizarHabitacion(@PathVariable Long id,
                                                            @Valid @RequestBody Habitacion habitacion) {
         return ResponseEntity.status(HttpStatus.OK).body(habitacionService.actualizar(id, habitacion));
     }
-
+    //http://localhost:8084/api/v1/habitaciones/2
+    //http://localhost:8084/api/v1/habitaciones/9999 --> Inexistente
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarHabitacion(@PathVariable Long id) {
         habitacionService.eliminar(id);
