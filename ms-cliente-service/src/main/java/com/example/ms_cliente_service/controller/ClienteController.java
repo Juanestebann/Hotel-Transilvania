@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,7 +15,9 @@ import org.springframework.web.bind.annotation.*;
 public class ClienteController {
 
     private final ClienteService clienteService;
+
     //http://localhost:8082/api/v1/clientes
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<?> findAll(
             @RequestParam(required = false) String rolCliente,
@@ -30,26 +33,34 @@ public class ClienteController {
 
         return ResponseEntity.status(HttpStatus.OK).body(clienteService.findAll());
     }
+
     //http://localhost:8082/api/v1/clientes/1 --> Existente
     //http://localhost:8082/api/v1/clientes/999 --> Inexistente
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Cliente> findById(@PathVariable Long id) {
         Cliente cliente = clienteService.findById(id);
         return ResponseEntity.status(HttpStatus.OK).body(cliente);
     }
+
     //http://localhost:8082/api/v1/clientes/rut/11111111-1
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/rut/{rutDocumento}")
     public ResponseEntity<Cliente> findByRutDocumento(@PathVariable String rutDocumento) {
         Cliente cliente = clienteService.findByRutDocumento(rutDocumento);
         return ResponseEntity.status(HttpStatus.OK).body(cliente);
     }
+
     //http://localhost:8082/api/v1/clientes
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<Cliente> guardarCliente(@Valid @RequestBody Cliente cliente) {
         Cliente nuevoCliente = clienteService.guardar(cliente);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoCliente);
     }
+
     //http://localhost:8082/api/v1/clientes/1
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Cliente> actualizarCliente(
             @PathVariable Long id,
@@ -58,7 +69,9 @@ public class ClienteController {
         Cliente clienteActualizado = clienteService.actualizar(id, cliente);
         return ResponseEntity.status(HttpStatus.OK).body(clienteActualizado);
     }
+
     //http://localhost:8082/api/v1/clientes/5
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarCliente(@PathVariable Long id) {
         clienteService.eliminar(id);

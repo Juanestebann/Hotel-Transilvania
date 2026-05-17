@@ -42,7 +42,7 @@ public class ReservaClient {
         return webClientBuilder
                 .baseUrl("http://localhost:8086/api/v1/reservas")
                 .build()
-                .patch()
+                .put()
                 .uri("/{id}/estado?estadoReserva={estado}", idReserva, estadoReserva)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response ->

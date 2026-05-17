@@ -122,6 +122,6 @@ public class ResenaService {
 
     public List<Resena> buscarPorEstado(String estadoResena) {
         log.info("Buscando reseñas por estado: {}", estadoResena);
-        return resenaRepository.findByEstadoResena(estadoResena);
+        return resenaRepository.findByEstadoResena(estadoResena.toUpperCase());
     }
 }

@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,6 +20,7 @@ public class NotificacionController {
     // http://localhost:8088/api/v1/notificaciones?idCliente=1
     // http://localhost:8088/api/v1/notificaciones?idUsuario=1
     // http://localhost:8088/api/v1/notificaciones?idReserva=1
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<?> findAll(
             @RequestParam(required = false) Long idCliente,
@@ -46,6 +48,7 @@ public class NotificacionController {
     }
 
     // http://localhost:8088/api/v1/notificaciones/1
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Notificacion> findById(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK)
@@ -53,6 +56,7 @@ public class NotificacionController {
     }
 
     // http://localhost:8088/api/v1/notificaciones
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<Notificacion> guardar(
             @Valid @RequestBody Notificacion notificacion
@@ -62,6 +66,7 @@ public class NotificacionController {
     }
 
     // http://localhost:8088/api/v1/notificaciones/1
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Notificacion> actualizar(
             @PathVariable Long id,
@@ -73,6 +78,7 @@ public class NotificacionController {
     }
 
     // http://localhost:8088/api/v1/notificaciones/1
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
 

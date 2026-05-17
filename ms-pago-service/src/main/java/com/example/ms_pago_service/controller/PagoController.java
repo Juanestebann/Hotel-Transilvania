@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,18 +17,21 @@ public class PagoController {
     private final PagoService pagoService;
 
     // http://localhost:8087/api/v1/pagos
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<?> findAll() {
         return ResponseEntity.ok(pagoService.findAll());
     }
 
     // http://localhost:8087/api/v1/pagos/1
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<?> findById(@PathVariable Long id) {
         return ResponseEntity.ok(pagoService.findById(id));
     }
 
     // http://localhost:8087/api/v1/pagos
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PostMapping
     public ResponseEntity<?> save(@Valid @RequestBody Pago pago) {
 
@@ -39,6 +43,7 @@ public class PagoController {
     }
 
     // http://localhost:8087/api/v1/pagos/1
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<?> update(
             @PathVariable Long id,
@@ -50,6 +55,7 @@ public class PagoController {
     }
 
     // http://localhost:8087/api/v1/pagos/1
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
 
@@ -59,6 +65,7 @@ public class PagoController {
     }
 
     // http://localhost:8087/api/v1/pagos/reserva/1
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/reserva/{reservaId}")
     public ResponseEntity<?> findByReservaId(@PathVariable Long reservaId) {
 
@@ -68,6 +75,7 @@ public class PagoController {
     }
 
     // http://localhost:8087/api/v1/pagos/estado/PAGADO
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/estado/{estadoPago}")
     public ResponseEntity<?> findByEstadoPago(@PathVariable String estadoPago) {
 

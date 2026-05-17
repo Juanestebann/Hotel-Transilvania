@@ -4,10 +4,12 @@ import com.example.ms_auth_usuarios_service.model.Usuario;
 import com.example.ms_auth_usuarios_service.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -15,6 +17,7 @@ import java.util.NoSuchElementException;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public List<Usuario> findAll() {
         log.info("Listando todos los usuarios");
@@ -36,12 +39,28 @@ public class UsuarioService {
         return usuarioRepository.findByRol(rol);
     }
 
+    public Optional<Usuario> findByNombre(String nombre) {
+        log.info("Buscando usuario con nombre: {}", nombre);
+        return usuarioRepository.findByNombre(nombre);
+    }
+
     public Usuario save(Usuario usuario) {
         log.info("Intentando crear usuario con nombre: {} y rol: {}", usuario.getNombre(), usuario.getRol());
 
         if (usuario.getIdUsuario() != null) {
             log.warn("Intento inválido de crear usuario enviando idUsuario: {}", usuario.getIdUsuario());
             throw new IllegalArgumentException("No debe enviar idUsuario al crear un usuario");
+        }
+
+        if (usuarioRepository.existsByNombre(usuario.getNombre())) {
+            log.warn("Intento de crear usuario duplicado: {}", usuario.getNombre());
+            throw new IllegalArgumentException("Ya existe un usuario con ese nombre");
+        }
+
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+
+        if (usuario.getRol() == null || usuario.getRol().isBlank()) {
+            usuario.setRol("USER");
         }
 
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
@@ -57,7 +76,11 @@ public class UsuarioService {
         Usuario usuarioExistente = findById(id);
 
         usuarioExistente.setNombre(usuario.getNombre());
-        usuarioExistente.setPassword(usuario.getPassword());
+
+        if (usuario.getPassword() != null && !usuario.getPassword().isBlank()) {
+            usuarioExistente.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        }
+
         usuarioExistente.setRol(usuario.getRol());
 
         Usuario usuarioActualizado = usuarioRepository.save(usuarioExistente);
