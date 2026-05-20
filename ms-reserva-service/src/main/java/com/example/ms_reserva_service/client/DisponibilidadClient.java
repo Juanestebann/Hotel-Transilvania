@@ -1,7 +1,9 @@
 package com.example.ms_reserva_service.client;
 
 import com.example.ms_reserva_service.dto.DisponibilidadDTO;
+import com.example.ms_reserva_service.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import java.time.LocalDate;
 public class DisponibilidadClient {
 
     private final WebClient.Builder webClientBuilder;
+    private final TokenProvider tokenProvider;
 
     public DisponibilidadDTO obtenerDisponibilidadPorHabitacionYFecha(
             Long idHabitacion,
@@ -27,9 +30,8 @@ public class DisponibilidadClient {
                 .build();
 
         return webClient.get()
-                .uri("/habitacion/{idHabitacion}/fecha/{fecha}",
-                        idHabitacion,
-                        fecha)
+                .uri("/habitacion/{idHabitacion}/fecha/{fecha}", idHabitacion, fecha)
+                .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         Mono.error(new ResponseStatusException(
@@ -59,6 +61,7 @@ public class DisponibilidadClient {
 
         return webClient.put()
                 .uri("/{id}", idDisponibilidad)
+                .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
                 .bodyValue(disponibilidad)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response ->

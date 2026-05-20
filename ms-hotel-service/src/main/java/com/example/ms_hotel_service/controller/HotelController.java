@@ -19,7 +19,6 @@ public class HotelController {
     private final HotelService hotelService;
 
     //http://localhost:8083/api/v1/hoteles
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping
     public ResponseEntity<List<Hotel>> findAll() {
         return ResponseEntity.ok(hotelService.findAll());
@@ -34,21 +33,18 @@ public class HotelController {
     }
 
     //http://localhost:8083/api/v1/hoteles?categoria=5 estrellas
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping(params = "categoria")
     public ResponseEntity<List<Hotel>> findByCategoria(@RequestParam String categoria) {
         return ResponseEntity.ok(hotelService.findByCategoria(categoria));
     }
 
     //http://localhost:8083/api/v1/hoteles?ciudad=Santiago
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping(params = "ciudad")
     public ResponseEntity<List<Hotel>> findByCiudad(@RequestParam String ciudad) {
         return ResponseEntity.ok(hotelService.findByCiudad(ciudad));
     }
 
     //http://localhost:8083/api/v1/hoteles?pais=Chile
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping(params = "pais")
     public ResponseEntity<List<Hotel>> findByPais(@RequestParam String pais) {
         return ResponseEntity.ok(hotelService.findByPais(pais));

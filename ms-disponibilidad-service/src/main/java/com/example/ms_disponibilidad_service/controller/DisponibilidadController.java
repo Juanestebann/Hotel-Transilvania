@@ -56,7 +56,7 @@ public class DisponibilidadController {
     }
 
     //http://localhost:8085/api/v1/disponibilidades/18
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Disponibilidad> actualizar(
             @PathVariable Long id,

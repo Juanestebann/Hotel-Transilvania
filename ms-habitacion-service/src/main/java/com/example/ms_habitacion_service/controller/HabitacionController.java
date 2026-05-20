@@ -19,7 +19,6 @@ public class HabitacionController {
     private final HabitacionService habitacionService;
 
     //http://localhost:8084/api/v1/habitaciones
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping
     public ResponseEntity<List<Habitacion>> findAll() {
         return ResponseEntity.status(HttpStatus.OK)
@@ -35,7 +34,6 @@ public class HabitacionController {
     }
 
     //http://localhost:8084/api/v1/habitaciones/estado/DISPONIBLE
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/estado/{estadoHabitacion}")
     public ResponseEntity<List<Habitacion>> findByEstadoHabitacion(
             @PathVariable String estadoHabitacion) {
@@ -46,7 +44,6 @@ public class HabitacionController {
     }
 
     //http://localhost:8084/api/v1/habitaciones/capacidad/2
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/capacidad/{capacidad}")
     public ResponseEntity<List<Habitacion>> findByCapacidadMinima(
             @PathVariable Integer capacidad) {
@@ -57,7 +54,6 @@ public class HabitacionController {
     }
 
     //http://localhost:8084/api/v1/habitaciones/hotel/1
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/hotel/{idHotel}")
     public ResponseEntity<List<Habitacion>> findByIdHotel(
             @PathVariable Long idHotel) {

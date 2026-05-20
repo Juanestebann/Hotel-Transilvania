@@ -74,7 +74,7 @@ public class PagoController {
         );
     }
 
-    // http://localhost:8087/api/v1/pagos/estado/PAGADO
+    // http://localhost:8087/api/v1/pagos/estado/APROBADO
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/estado/{estadoPago}")
     public ResponseEntity<?> findByEstadoPago(@PathVariable String estadoPago) {

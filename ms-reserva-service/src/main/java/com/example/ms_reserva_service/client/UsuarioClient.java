@@ -1,7 +1,9 @@
 package com.example.ms_reserva_service.client;
 
 import com.example.ms_reserva_service.dto.UsuarioDTO;
+import com.example.ms_reserva_service.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import reactor.core.publisher.Mono;
 public class UsuarioClient {
 
     private final WebClient.Builder webClientBuilder;
+    private final TokenProvider tokenProvider;
 
     public UsuarioDTO obtenerUsuarioPorId(Long idUsuario) {
 
@@ -23,6 +26,7 @@ public class UsuarioClient {
 
         return webClient.get()
                 .uri("/{id}", idUsuario)
+                .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         Mono.error(new ResponseStatusException(

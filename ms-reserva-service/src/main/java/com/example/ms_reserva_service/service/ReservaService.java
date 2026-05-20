@@ -101,8 +101,10 @@ public class ReservaService {
 
         Reserva reservaExistente = findById(id);
 
-        log.info("Liberando disponibilidad anterior para reserva id: {}", id);
-        liberarDisponibilidadReserva(reservaExistente);
+        if (debeOcuparDisponibilidad(reservaExistente)) {
+            log.info("Liberando disponibilidad anterior para reserva id: {}", id);
+            liberarDisponibilidadReserva(reservaExistente);
+        }
 
         validarReservaCompleta(reservaActualizada);
 
@@ -354,10 +356,31 @@ public class ReservaService {
         log.info("Cambiando estado de reserva id: {} a {}", id, estadoReserva);
 
         Reserva reserva = findById(id);
+        String estadoAnterior = reserva.getEstadoReserva();
+        String nuevoEstado = estadoReserva.toUpperCase();
 
-        reserva.setEstadoReserva(estadoReserva.toUpperCase());
+        reserva.setEstadoReserva(nuevoEstado);
+        validarEstadoReserva(reserva);
+
+        if (estadoAnterior.equalsIgnoreCase("CONFIRMADA")
+                && !nuevoEstado.equalsIgnoreCase("CONFIRMADA")) {
+            log.info("Reserva id: {} deja de estar CONFIRMADA. Liberando disponibilidad", id);
+            liberarDisponibilidadReserva(reserva);
+            reserva.setEstadoReserva(nuevoEstado);
+        }
+
+        if (debeOcuparDisponibilidad(reserva)
+                && !estadoAnterior.equalsIgnoreCase("CONFIRMADA")) {
+            log.info("Reserva id: {} pasa a CONFIRMADA. Validando y ocupando disponibilidad", id);
+            validarDisponibilidadReserva(reserva);
+        }
 
         Reserva reservaGuardada = reservaRepository.save(reserva);
+
+        if (debeOcuparDisponibilidad(reservaGuardada)
+                && !estadoAnterior.equalsIgnoreCase("CONFIRMADA")) {
+            marcarDisponibilidadComoOcupada(reservaGuardada);
+        }
 
         log.info("Estado actualizado correctamente para reserva id: {}", id);
 

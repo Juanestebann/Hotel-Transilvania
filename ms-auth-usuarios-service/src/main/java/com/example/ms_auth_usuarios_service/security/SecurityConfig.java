@@ -49,25 +49,23 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Endpoints públicos: login y register
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/register"
                         ).permitAll()
 
-                        // Solo ADMIN puede ver usuarios
+                        .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/{id}").hasAnyRole("USER", "ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/rol/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/usuarios").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/**").hasRole("ADMIN")
 
-                        // Solo ADMIN puede crear usuarios
                         .requestMatchers(HttpMethod.POST, "/api/v1/usuarios/**").hasRole("ADMIN")
 
-                        // Solo ADMIN puede modificar usuarios
                         .requestMatchers(HttpMethod.PUT, "/api/v1/usuarios/**").hasRole("ADMIN")
 
-                        // Solo ADMIN puede eliminar usuarios
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/usuarios/**").hasRole("ADMIN")
 
-                        // Cualquier otro endpoint necesita token válido
                         .anyRequest().authenticated()
                 )
 

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -44,6 +45,10 @@ public class PagoService {
                 pago.getEstadoPago()
         );
 
+        if (pago.getFechaPago() == null) {
+            pago.setFechaPago(LocalDateTime.now());
+        }
+
         validarMonto(pago);
         validarEstadoPago(pago.getEstadoPago());
 
@@ -57,9 +62,8 @@ public class PagoService {
         usuarioClient.obtenerUsuarioPorId(pago.getIdUsuario());
         log.info("Usuario validado correctamente con id: {}", pago.getIdUsuario());
 
-        actualizarEstadoReservaSegunPago(pago);
-
         Pago pagoGuardado = pagoRepository.save(pago);
+        actualizarEstadoReservaSegunPago(pagoGuardado);
 
         log.info(
                 "Pago creado correctamente con id: {}, reserva id: {}, estado: {}",
@@ -75,6 +79,10 @@ public class PagoService {
         log.info("Actualizando pago con id: {}", id);
 
         Pago pago = findById(id);
+
+        if (pagoActualizado.getFechaPago() == null) {
+            pagoActualizado.setFechaPago(LocalDateTime.now());
+        }
 
         validarMonto(pagoActualizado);
         validarEstadoPago(pagoActualizado.getEstadoPago());
@@ -94,9 +102,8 @@ public class PagoService {
         pago.setEstadoPago(pagoActualizado.getEstadoPago().toUpperCase());
         pago.setFechaPago(pagoActualizado.getFechaPago());
 
-        actualizarEstadoReservaSegunPago(pago);
-
         Pago pagoGuardado = pagoRepository.save(pago);
+        actualizarEstadoReservaSegunPago(pagoGuardado);
 
         log.info(
                 "Pago actualizado correctamente con id: {}, reserva id: {}, estado: {}",

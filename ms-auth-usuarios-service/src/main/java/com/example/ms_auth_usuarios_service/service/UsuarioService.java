@@ -44,6 +44,12 @@ public class UsuarioService {
         return usuarioRepository.findByNombre(nombre);
     }
 
+    public Usuario register(Usuario usuario) {
+        log.info("Registro público de usuario: {}", usuario.getNombre());
+        usuario.setRol("USER");
+        return save(usuario);
+    }
+
     public Usuario save(Usuario usuario) {
         log.info("Intentando crear usuario con nombre: {} y rol: {}", usuario.getNombre(), usuario.getRol());
 
@@ -63,6 +69,8 @@ public class UsuarioService {
             usuario.setRol("USER");
         }
 
+        validarRol(usuario.getRol());
+
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
 
         log.info("Usuario creado correctamente con id: {}", usuarioGuardado.getIdUsuario());
@@ -81,6 +89,7 @@ public class UsuarioService {
             usuarioExistente.setPassword(passwordEncoder.encode(usuario.getPassword()));
         }
 
+        validarRol(usuario.getRol());
         usuarioExistente.setRol(usuario.getRol());
 
         Usuario usuarioActualizado = usuarioRepository.save(usuarioExistente);
@@ -98,5 +107,11 @@ public class UsuarioService {
         usuarioRepository.delete(usuario);
 
         log.warn("Usuario eliminado correctamente con id: {}", id);
+    }
+
+    private void validarRol(String rol) {
+        if (!rol.equalsIgnoreCase("USER") && !rol.equalsIgnoreCase("ADMIN")) {
+            throw new IllegalArgumentException("Rol inválido. Use: USER o ADMIN");
+        }
     }
 }

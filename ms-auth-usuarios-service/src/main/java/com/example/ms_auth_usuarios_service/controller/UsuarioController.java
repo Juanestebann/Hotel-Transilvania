@@ -25,6 +25,7 @@ public class UsuarioController {
 
     //http://localhost:8081/api/v1/usuarios/1
     //http://localhost:8081/api/v1/usuarios/9999 --> Usuario Inexistente
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<?> findById(@PathVariable Long id) {
         return ResponseEntity.ok(usuarioService.findById(id));

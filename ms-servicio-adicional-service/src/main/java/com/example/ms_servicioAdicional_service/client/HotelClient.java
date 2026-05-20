@@ -1,7 +1,9 @@
 package com.example.ms_servicioAdicional_service.client;
 
 import com.example.ms_servicioAdicional_service.dto.HotelDTO;
+import com.example.ms_servicioAdicional_service.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import reactor.core.publisher.Mono;
 public class HotelClient {
 
     private final WebClient.Builder webClientBuilder;
+    private final TokenProvider tokenProvider;
 
     public HotelDTO obtenerHotelPorId(Long id) {
 
@@ -23,6 +26,7 @@ public class HotelClient {
 
         return webClient.get()
                 .uri("/{id}", id)
+                .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
                 .retrieve()
 
                 // Error 404

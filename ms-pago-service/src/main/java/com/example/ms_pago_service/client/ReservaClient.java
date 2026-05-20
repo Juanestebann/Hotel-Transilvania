@@ -1,6 +1,9 @@
 package com.example.ms_pago_service.client;
+
 import com.example.ms_pago_service.dto.ReservaDTO;
+import com.example.ms_pago_service.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -13,6 +16,7 @@ import reactor.core.publisher.Mono;
 public class ReservaClient {
 
     private final WebClient.Builder webClientBuilder;
+    private final TokenProvider tokenProvider;
 
     public ReservaDTO obtenerReservaPorId(Long idReserva) {
 
@@ -21,6 +25,7 @@ public class ReservaClient {
                 .build()
                 .get()
                 .uri("/{id}", idReserva)
+                .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         Mono.error(new ResponseStatusException(
@@ -37,6 +42,7 @@ public class ReservaClient {
                 .bodyToMono(ReservaDTO.class)
                 .block();
     }
+
     public ReservaDTO cambiarEstadoReserva(Long idReserva, String estadoReserva) {
 
         return webClientBuilder
@@ -44,6 +50,7 @@ public class ReservaClient {
                 .build()
                 .put()
                 .uri("/{id}/estado?estadoReserva={estado}", idReserva, estadoReserva)
+                .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         Mono.error(new ResponseStatusException(

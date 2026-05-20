@@ -7,21 +7,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.5</version>
-        <relativePath/>
+        <groupId>com.example</groupId>
+        <artifactId>hotel-transilvania</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.example</groupId>
     <artifactId>ms-hotel-service</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>ms-hotel-service</name>
     <description>Microservicio de hoteles</description>
-
-    <properties>
-        <java.version>21</java.version>
-    </properties>
 
     <dependencies>
 

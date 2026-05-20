@@ -1,8 +1,10 @@
 package com.example.ms_auth_usuarios_service.controller;
 
+import com.example.ms_auth_usuarios_service.dto.RegisterRequest;
 import com.example.ms_auth_usuarios_service.model.Usuario;
 import com.example.ms_auth_usuarios_service.security.JwtService;
 import com.example.ms_auth_usuarios_service.service.UsuarioService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +24,11 @@ public class AuthController {
     private final UsuarioService usuarioService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Usuario usuario) {
-        Usuario usuarioGuardado = usuarioService.save(usuario);
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        Usuario usuario = new Usuario();
+        usuario.setNombre(request.getNombre());
+        usuario.setPassword(request.getPassword());
+        Usuario usuarioGuardado = usuarioService.register(usuario);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "message", "Usuario registrado correctamente",

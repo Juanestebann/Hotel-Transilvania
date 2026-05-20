@@ -63,6 +63,7 @@ public class ReservaController {
     }
 
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Reserva> findById(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(reservaService.findById(id));
@@ -91,6 +92,7 @@ public class ReservaController {
     }
 
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PutMapping("/{id}/estado")
     public ResponseEntity<Reserva> cambiarEstado(
             @PathVariable Long id,
