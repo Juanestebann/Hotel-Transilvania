@@ -31,12 +31,10 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    // BCryptPasswordEncoder --> Guarda contraseñas encriptadas.
 
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {
-
         return config.getAuthenticationManager();
     }
 
@@ -50,18 +48,31 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
+
+                        // Endpoints públicos: login y register
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/register"
                         ).permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/**").permitAll()
+                        // Solo ADMIN puede ver usuarios
+                        .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/**").hasRole("ADMIN")
 
+                        // Solo ADMIN puede crear usuarios
+                        .requestMatchers(HttpMethod.POST, "/api/v1/usuarios/**").hasRole("ADMIN")
+
+                        // Solo ADMIN puede modificar usuarios
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/usuarios/**").hasRole("ADMIN")
+
+                        // Solo ADMIN puede eliminar usuarios
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/usuarios/**").hasRole("ADMIN")
+
+                        // Cualquier otro endpoint necesita token válido
                         .anyRequest().authenticated()
                 )
 
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-                    // conecta el filtro JWT con Spring Security.
+
         return http.build();
     }
 }
