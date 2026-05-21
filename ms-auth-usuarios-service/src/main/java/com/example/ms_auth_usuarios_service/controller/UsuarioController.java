@@ -16,29 +16,33 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
-    //http://localhost:8081/api/v1/usuarios
+    // Solo ADMIN puede listar todos los usuarios
+    // http://localhost:8081/api/v1/usuarios
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<?> findAll() {
         return ResponseEntity.ok(usuarioService.findAll());
     }
 
-    //http://localhost:8081/api/v1/usuarios/1
-    //http://localhost:8081/api/v1/usuarios/9999 --> Usuario Inexistente
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    // Solo ADMIN puede buscar usuarios por ID
+    // http://localhost:8081/api/v1/usuarios/1
+    // http://localhost:8081/api/v1/usuarios/9999 --> Usuario inexistente
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<?> findById(@PathVariable Long id) {
         return ResponseEntity.ok(usuarioService.findById(id));
     }
 
-    //http://localhost:8081/api/v1/usuarios/rol/ADMIN
+    // Solo ADMIN puede buscar usuarios por rol
+    // http://localhost:8081/api/v1/usuarios/rol/ADMIN
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/rol/{rol}")
     public ResponseEntity<?> findByRol(@PathVariable String rol) {
         return ResponseEntity.ok(usuarioService.findByRol(rol));
     }
 
-    //http://localhost:8081/api/v1/usuarios --> Probar crear y validaciones.
+    // Solo ADMIN puede crear usuarios manualmente
+    // http://localhost:8081/api/v1/usuarios
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<?> save(@Valid @RequestBody Usuario usuario) {
@@ -46,14 +50,16 @@ public class UsuarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioGuardado);
     }
 
-    //http://localhost:8081/api/v1/usuarios/1
+    // Solo ADMIN puede actualizar usuarios
+    // http://localhost:8081/api/v1/usuarios/1
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody Usuario usuario) {
         return ResponseEntity.ok(usuarioService.update(id, usuario));
     }
 
-    //http://localhost:8081/api/v1/usuarios/5
+    // Solo ADMIN puede eliminar usuarios
+    // http://localhost:8081/api/v1/usuarios/5
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {

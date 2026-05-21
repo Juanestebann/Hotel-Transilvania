@@ -16,7 +16,8 @@ public class ClienteController {
 
     private final ClienteService clienteService;
 
-    //http://localhost:8082/api/v1/clientes
+    // Solo ADMIN puede listar clientes o filtrar por rol/tipo
+    // http://localhost:8082/api/v1/clientes
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<?> findAll(
@@ -34,16 +35,17 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.OK).body(clienteService.findAll());
     }
 
-    //http://localhost:8082/api/v1/clientes/1 --> Existente
-    //http://localhost:8082/api/v1/clientes/999 --> Inexistente
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    // Solo ADMIN puede buscar clientes por ID
+    // http://localhost:8082/api/v1/clientes/1
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Cliente> findById(@PathVariable Long id) {
         Cliente cliente = clienteService.findById(id);
         return ResponseEntity.status(HttpStatus.OK).body(cliente);
     }
 
-    //http://localhost:8082/api/v1/clientes/rut/11111111-1
+    // Solo ADMIN puede buscar clientes por RUT
+    // http://localhost:8082/api/v1/clientes/rut/11111111-1
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/rut/{rutDocumento}")
     public ResponseEntity<Cliente> findByRutDocumento(@PathVariable String rutDocumento) {
@@ -51,7 +53,8 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.OK).body(cliente);
     }
 
-    //http://localhost:8082/api/v1/clientes
+    // Solo ADMIN puede crear clientes
+    // http://localhost:8082/api/v1/clientes
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<Cliente> guardarCliente(@Valid @RequestBody Cliente cliente) {
@@ -59,7 +62,8 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoCliente);
     }
 
-    //http://localhost:8082/api/v1/clientes/1
+    // Solo ADMIN puede actualizar clientes
+    // http://localhost:8082/api/v1/clientes/1
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Cliente> actualizarCliente(
@@ -70,7 +74,8 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.OK).body(clienteActualizado);
     }
 
-    //http://localhost:8082/api/v1/clientes/5
+    // Solo ADMIN puede eliminar clientes
+    // http://localhost:8082/api/v1/clientes/5
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarCliente(@PathVariable Long id) {
