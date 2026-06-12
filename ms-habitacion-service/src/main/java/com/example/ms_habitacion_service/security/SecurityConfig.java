@@ -1,7 +1,5 @@
 package com.example.ms_habitacion_service.security;
 
-
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -31,7 +29,17 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
+                        // Permitir Swagger / OpenAPI sin token
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+
+                        // Permitir consultas GET de habitaciones sin token
                         .requestMatchers(HttpMethod.GET, "/api/v1/habitaciones/**").permitAll()
+
+                        // Todo lo demás sigue protegido con JWT
                         .anyRequest().authenticated()
                 )
 
