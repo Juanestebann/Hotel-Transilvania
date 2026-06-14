@@ -5,11 +5,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9bd66620-8bbf-4b52-95bf-8328cc87f463" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../ms-hotel-service/src/main/resources/db/migration/V1__crear_tabla_hotel.sql" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-hotel-service/src/main/resources/db/migration/V1__crear_tabla_hotel.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../api-gateway/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../api-gateway/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../api-gateway/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../api-gateway/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-auth-usuarios-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-auth-usuarios-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-auth-usuarios-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-auth-usuarios-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-cliente-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-cliente-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-cliente-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-cliente-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-disponibilidad-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-disponibilidad-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-disponibilidad-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-disponibilidad-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-habitacion-service/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-habitacion-service/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-habitacion-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-habitacion-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-habitacion-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-habitacion-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-hotel-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-hotel-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-hotel-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-hotel-service/src/main/resources/application.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-pago-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-pago-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-pago-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-pago-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-resena-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-resena-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-resena-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-resena-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-reserva-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-reserva-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-reserva-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-reserva-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-servicio-adicional-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-servicio-adicional-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ms-servicio-adicional-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-servicio-adicional-service/src/main/resources/application.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,6 +125,13 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.32098.37" />
+      </set>
+    </attachedChunks>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
