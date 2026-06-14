@@ -8,13 +8,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import org.springframework.hateoas.RepresentationModel;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "servicio_adicional")
-public class ServicioAdicionalModel {
+public class ServicioAdicionalModel extends RepresentationModel<ServicioAdicionalModel> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

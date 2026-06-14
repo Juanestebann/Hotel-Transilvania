@@ -7,13 +7,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-
+import org.springframework.hateoas.RepresentationModel;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "resena")
-public class Resena {
+public class Resena extends RepresentationModel<Resena>  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

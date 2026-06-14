@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
 @Tag(
         name = "Reseñas",
         description = "Operaciones relacionadas con la gestión de reseñas"
@@ -34,7 +36,11 @@ public class ResenaController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping
     public ResponseEntity<List<Resena>> listarResenas() {
-        return ResponseEntity.ok(resenaService.listarResenas());
+        List<Resena> resenas = resenaService.listarResenas();
+
+        resenas.forEach(this::agregarLinksResena);
+
+        return ResponseEntity.ok(resenas);
     }
 
     @Operation(
@@ -44,7 +50,11 @@ public class ResenaController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Resena> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(resenaService.buscarPorId(id));
+        Resena resena = resenaService.buscarPorId(id);
+
+        agregarLinksResena(resena);
+
+        return ResponseEntity.ok(resena);
     }
 
     @Operation(
@@ -54,7 +64,11 @@ public class ResenaController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PostMapping
     public ResponseEntity<Resena> guardarResena(@Valid @RequestBody Resena resena) {
-        return ResponseEntity.ok(resenaService.guardarResena(resena));
+        Resena resenaGuardada = resenaService.guardarResena(resena);
+
+        agregarLinksResena(resenaGuardada);
+
+        return ResponseEntity.ok(resenaGuardada);
     }
 
     @Operation(
@@ -67,7 +81,11 @@ public class ResenaController {
             @PathVariable Long id,
             @Valid @RequestBody Resena resena) {
 
-        return ResponseEntity.ok(resenaService.actualizarResena(id, resena));
+        Resena resenaActualizada = resenaService.actualizarResena(id, resena);
+
+        agregarLinksResena(resenaActualizada);
+
+        return ResponseEntity.ok(resenaActualizada);
     }
 
     @Operation(
@@ -88,7 +106,11 @@ public class ResenaController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/cliente/{idCliente}")
     public ResponseEntity<List<Resena>> buscarPorCliente(@PathVariable Long idCliente) {
-        return ResponseEntity.ok(resenaService.buscarPorCliente(idCliente));
+        List<Resena> resenas = resenaService.buscarPorCliente(idCliente);
+
+        resenas.forEach(this::agregarLinksResena);
+
+        return ResponseEntity.ok(resenas);
     }
 
     @Operation(
@@ -98,7 +120,11 @@ public class ResenaController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/hotel/{idHotel}")
     public ResponseEntity<List<Resena>> buscarPorHotel(@PathVariable Long idHotel) {
-        return ResponseEntity.ok(resenaService.buscarPorHotel(idHotel));
+        List<Resena> resenas = resenaService.buscarPorHotel(idHotel);
+
+        resenas.forEach(this::agregarLinksResena);
+
+        return ResponseEntity.ok(resenas);
     }
 
     @Operation(
@@ -108,7 +134,11 @@ public class ResenaController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/habitacion/{idHabitacion}")
     public ResponseEntity<List<Resena>> buscarPorHabitacion(@PathVariable Long idHabitacion) {
-        return ResponseEntity.ok(resenaService.buscarPorHabitacion(idHabitacion));
+        List<Resena> resenas = resenaService.buscarPorHabitacion(idHabitacion);
+
+        resenas.forEach(this::agregarLinksResena);
+
+        return ResponseEntity.ok(resenas);
     }
 
     @Operation(
@@ -118,7 +148,11 @@ public class ResenaController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/reserva/{idReserva}")
     public ResponseEntity<List<Resena>> buscarPorReserva(@PathVariable Long idReserva) {
-        return ResponseEntity.ok(resenaService.buscarPorReserva(idReserva));
+        List<Resena> resenas = resenaService.buscarPorReserva(idReserva);
+
+        resenas.forEach(this::agregarLinksResena);
+
+        return ResponseEntity.ok(resenas);
     }
 
     @Operation(
@@ -128,7 +162,11 @@ public class ResenaController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/calificacion/{calificacion}")
     public ResponseEntity<List<Resena>> buscarPorCalificacion(@PathVariable Integer calificacion) {
-        return ResponseEntity.ok(resenaService.buscarPorCalificacion(calificacion));
+        List<Resena> resenas = resenaService.buscarPorCalificacion(calificacion);
+
+        resenas.forEach(this::agregarLinksResena);
+
+        return ResponseEntity.ok(resenas);
     }
 
     @Operation(
@@ -138,6 +176,53 @@ public class ResenaController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/estado/{estadoResena}")
     public ResponseEntity<List<Resena>> buscarPorEstado(@PathVariable String estadoResena) {
-        return ResponseEntity.ok(resenaService.buscarPorEstado(estadoResena));
+        List<Resena> resenas = resenaService.buscarPorEstado(estadoResena);
+
+        resenas.forEach(this::agregarLinksResena);
+
+        return ResponseEntity.ok(resenas);
+    }
+
+    /**
+     * Agrega enlaces HATEOAS a una reseña.
+     * Permite navegar entre recursos relacionados de forma dinámica.
+     */
+    private void agregarLinksResena(Resena resena) {
+
+        // Link al recurso actual (la propia reseña)
+        resena.add(linkTo(methodOn(ResenaController.class)
+                .buscarPorId(resena.getId())).withSelfRel());
+
+        // Link para listar todas las reseñas
+        resena.add(linkTo(methodOn(ResenaController.class)
+                .listarResenas()).withRel("todas-las-resenas"));
+
+        // Link para ver las reseñas del mismo cliente
+        resena.add(linkTo(methodOn(ResenaController.class)
+                .buscarPorCliente(resena.getIdCliente())).withRel("resenas-del-cliente"));
+
+        // Link para ver las reseñas del mismo hotel
+        resena.add(linkTo(methodOn(ResenaController.class)
+                .buscarPorHotel(resena.getIdHotel())).withRel("resenas-del-hotel"));
+
+        // Link para ver las reseñas de la misma habitación
+        resena.add(linkTo(methodOn(ResenaController.class)
+                .buscarPorHabitacion(resena.getIdHabitacion())).withRel("resenas-de-la-habitacion"));
+
+        // Link para ver las reseñas de la misma reserva
+        resena.add(linkTo(methodOn(ResenaController.class)
+                .buscarPorReserva(resena.getIdReserva())).withRel("resenas-de-la-reserva"));
+
+        // Link para buscar reseñas con la misma calificación
+        resena.add(linkTo(methodOn(ResenaController.class)
+                .buscarPorCalificacion(resena.getCalificacion())).withRel("resenas-por-calificacion"));
+
+        // Link para actualizar esta reseña
+        resena.add(linkTo(methodOn(ResenaController.class)
+                .actualizarResena(resena.getId(), null)).withRel("actualizar-resena"));
+
+        // Link para eliminar esta reseña
+        resena.add(linkTo(methodOn(ResenaController.class)
+                .eliminarResena(resena.getId())).withRel("eliminar-resena"));
     }
 }

@@ -8,13 +8,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-
+import org.springframework.hateoas.RepresentationModel;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "notificacion")
-public class Notificacion {
+public class Notificacion extends RepresentationModel<Notificacion> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -12,6 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
 @RestController
 @RequestMapping("/api/v1/notificaciones")
 @RequiredArgsConstructor
@@ -41,22 +45,28 @@ public class NotificacionController {
     ) {
 
         if (idCliente != null) {
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(notificacionService.findByIdCliente(idCliente));
+            List<Notificacion> notificaciones = notificacionService.findByIdCliente(idCliente);
+            notificaciones.forEach(this::agregarLinksNotificacion);
+            return ResponseEntity.status(HttpStatus.OK).body(notificaciones);
         }
 
         if (idUsuario != null) {
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(notificacionService.findByIdUsuario(idUsuario));
+            List<Notificacion> notificaciones = notificacionService.findByIdUsuario(idUsuario);
+            notificaciones.forEach(this::agregarLinksNotificacion);
+            return ResponseEntity.status(HttpStatus.OK).body(notificaciones);
         }
 
         if (idReserva != null) {
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(notificacionService.findByIdReserva(idReserva));
+            List<Notificacion> notificaciones = notificacionService.findByIdReserva(idReserva);
+            notificaciones.forEach(this::agregarLinksNotificacion);
+            return ResponseEntity.status(HttpStatus.OK).body(notificaciones);
         }
 
+        List<Notificacion> notificaciones = notificacionService.findAll();
+        notificaciones.forEach(this::agregarLinksNotificacion);
+
         return ResponseEntity.status(HttpStatus.OK)
-                .body(notificacionService.findAll());
+                .body(notificaciones);
     }
 
     // http://localhost:8088/api/v1/notificaciones/1
@@ -67,8 +77,12 @@ public class NotificacionController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Notificacion> findById(@PathVariable Long id) {
+        Notificacion notificacion = notificacionService.findById(id);
+
+        agregarLinksNotificacion(notificacion);
+
         return ResponseEntity.status(HttpStatus.OK)
-                .body(notificacionService.findById(id));
+                .body(notificacion);
     }
 
     // http://localhost:8088/api/v1/notificaciones
@@ -81,8 +95,12 @@ public class NotificacionController {
     public ResponseEntity<Notificacion> guardar(
             @Valid @RequestBody Notificacion notificacion
     ) {
+        Notificacion nuevaNotificacion = notificacionService.guardar(notificacion);
+
+        agregarLinksNotificacion(nuevaNotificacion);
+
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(notificacionService.guardar(notificacion));
+                .body(nuevaNotificacion);
     }
 
     // http://localhost:8088/api/v1/notificaciones/1
@@ -97,8 +115,13 @@ public class NotificacionController {
             @Valid @RequestBody Notificacion notificacion
     ) {
 
+        Notificacion notificacionActualizada =
+                notificacionService.actualizar(id, notificacion);
+
+        agregarLinksNotificacion(notificacionActualizada);
+
         return ResponseEntity.status(HttpStatus.OK)
-                .body(notificacionService.actualizar(id, notificacion));
+                .body(notificacionActualizada);
     }
 
     // http://localhost:8088/api/v1/notificaciones/1
@@ -113,5 +136,40 @@ public class NotificacionController {
         notificacionService.eliminar(id);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    /**
+     * Agrega enlaces HATEOAS a una notificación.
+     * Permite navegar hacia recursos y acciones relacionadas desde la respuesta.
+     */
+    private void agregarLinksNotificacion(Notificacion notificacion) {
+
+        // Link al recurso actual
+        notificacion.add(linkTo(methodOn(NotificacionController.class)
+                .findById(notificacion.getId())).withSelfRel());
+
+        // Link para listar todas las notificaciones
+        notificacion.add(linkTo(methodOn(NotificacionController.class)
+                .findAll(null, null, null)).withRel("todas-las-notificaciones"));
+
+        // Link para buscar notificaciones del mismo cliente
+        notificacion.add(linkTo(methodOn(NotificacionController.class)
+                .findAll(notificacion.getIdCliente(), null, null)).withRel("notificaciones-del-cliente"));
+
+        // Link para buscar notificaciones del mismo usuario
+        notificacion.add(linkTo(methodOn(NotificacionController.class)
+                .findAll(null, notificacion.getIdUsuario(), null)).withRel("notificaciones-del-usuario"));
+
+        // Link para buscar notificaciones de la misma reserva
+        notificacion.add(linkTo(methodOn(NotificacionController.class)
+                .findAll(null, null, notificacion.getIdReserva())).withRel("notificaciones-de-la-reserva"));
+
+        // Link para actualizar esta notificación
+        notificacion.add(linkTo(methodOn(NotificacionController.class)
+                .actualizar(notificacion.getId(), null)).withRel("actualizar-notificacion"));
+
+        // Link para eliminar esta notificación
+        notificacion.add(linkTo(methodOn(NotificacionController.class)
+                .eliminar(notificacion.getId())).withRel("eliminar-notificacion"));
     }
 }

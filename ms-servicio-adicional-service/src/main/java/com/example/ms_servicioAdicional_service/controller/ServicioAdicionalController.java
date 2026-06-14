@@ -12,6 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
 @RestController
 @RequestMapping("/api/v1/servicios-adicionales")
 @RequiredArgsConstructor
@@ -38,27 +42,33 @@ public class ServicioAdicionalController {
     ) {
 
         if (idHotel != null) {
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(servicioAdicionalService.findByIdHotel(idHotel));
+            List<ServicioAdicionalModel> servicios = servicioAdicionalService.findByIdHotel(idHotel);
+            servicios.forEach(this::agregarLinksServicio);
+            return ResponseEntity.status(HttpStatus.OK).body(servicios);
         }
 
         if (idReserva != null) {
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(servicioAdicionalService.findByIdReserva(idReserva));
+            List<ServicioAdicionalModel> servicios = servicioAdicionalService.findByIdReserva(idReserva);
+            servicios.forEach(this::agregarLinksServicio);
+            return ResponseEntity.status(HttpStatus.OK).body(servicios);
         }
 
         if (estado != null) {
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(servicioAdicionalService.findByEstado(estado));
+            List<ServicioAdicionalModel> servicios = servicioAdicionalService.findByEstado(estado);
+            servicios.forEach(this::agregarLinksServicio);
+            return ResponseEntity.status(HttpStatus.OK).body(servicios);
         }
 
         if (nombre != null) {
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(servicioAdicionalService.findByNombre(nombre));
+            List<ServicioAdicionalModel> servicios = servicioAdicionalService.findByNombre(nombre);
+            servicios.forEach(this::agregarLinksServicio);
+            return ResponseEntity.status(HttpStatus.OK).body(servicios);
         }
 
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(servicioAdicionalService.findAll());
+        List<ServicioAdicionalModel> servicios = servicioAdicionalService.findAll();
+        servicios.forEach(this::agregarLinksServicio);
+
+        return ResponseEntity.status(HttpStatus.OK).body(servicios);
     }
 
     @Operation(
@@ -73,6 +83,8 @@ public class ServicioAdicionalController {
 
         ServicioAdicionalModel servicio =
                 servicioAdicionalService.findById(id);
+
+        agregarLinksServicio(servicio);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(servicio);
@@ -90,6 +102,8 @@ public class ServicioAdicionalController {
 
         ServicioAdicionalModel nuevoServicio =
                 servicioAdicionalService.guardar(servicioAdicional);
+
+        agregarLinksServicio(nuevoServicio);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(nuevoServicio);
@@ -109,6 +123,8 @@ public class ServicioAdicionalController {
         ServicioAdicionalModel servicioActualizado =
                 servicioAdicionalService.actualizar(id, servicioAdicional);
 
+        agregarLinksServicio(servicioActualizado);
+
         return ResponseEntity.status(HttpStatus.OK)
                 .body(servicioActualizado);
     }
@@ -127,5 +143,44 @@ public class ServicioAdicionalController {
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .build();
+    }
+
+    /**
+     * Agrega enlaces HATEOAS a un servicio adicional.
+     * Permite navegar hacia recursos y acciones relacionadas desde la respuesta.
+     */
+    private void agregarLinksServicio(ServicioAdicionalModel servicio) {
+
+        // Link al recurso actual
+        servicio.add(linkTo(methodOn(ServicioAdicionalController.class)
+                .findById(servicio.getId())).withSelfRel());
+
+        // Link para listar todos los servicios adicionales
+        servicio.add(linkTo(methodOn(ServicioAdicionalController.class)
+                .findAll(null, null, null, null)).withRel("todos-los-servicios"));
+
+        // Link para buscar servicios del mismo hotel
+        servicio.add(linkTo(methodOn(ServicioAdicionalController.class)
+                .findAll(servicio.getIdHotel(), null, null, null)).withRel("servicios-del-hotel"));
+
+        // Link para buscar servicios de la misma reserva
+        servicio.add(linkTo(methodOn(ServicioAdicionalController.class)
+                .findAll(null, servicio.getIdReserva(), null, null)).withRel("servicios-de-la-reserva"));
+
+        // Link para buscar servicios con el mismo estado
+        servicio.add(linkTo(methodOn(ServicioAdicionalController.class)
+                .findAll(null, null, servicio.getEstado(), null)).withRel("servicios-por-estado"));
+
+        // Link para buscar servicios con el mismo nombre
+        servicio.add(linkTo(methodOn(ServicioAdicionalController.class)
+                .findAll(null, null, null, servicio.getNombre())).withRel("servicios-por-nombre"));
+
+        // Link para actualizar este servicio adicional
+        servicio.add(linkTo(methodOn(ServicioAdicionalController.class)
+                .actualizarServicio(servicio.getId(), null)).withRel("actualizar-servicio"));
+
+        // Link para eliminar este servicio adicional
+        servicio.add(linkTo(methodOn(ServicioAdicionalController.class)
+                .eliminarServicio(servicio.getId())).withRel("eliminar-servicio"));
     }
 }
