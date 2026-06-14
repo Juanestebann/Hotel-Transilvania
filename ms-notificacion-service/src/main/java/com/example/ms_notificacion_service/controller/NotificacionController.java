@@ -2,6 +2,9 @@ package com.example.ms_notificacion_service.controller;
 
 import com.example.ms_notificacion_service.model.Notificacion;
 import com.example.ms_notificacion_service.service.NotificacionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,6 +15,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/notificaciones")
 @RequiredArgsConstructor
+@Tag(
+        name = "Notificaciones",
+        description = "Operaciones relacionadas con la gestión de notificaciones"
+)
+@SecurityRequirement(name = "bearerAuth")
 public class NotificacionController {
 
     private final NotificacionService notificacionService;
@@ -20,6 +28,10 @@ public class NotificacionController {
     // http://localhost:8088/api/v1/notificaciones?idCliente=1
     // http://localhost:8088/api/v1/notificaciones?idUsuario=1
     // http://localhost:8088/api/v1/notificaciones?idReserva=1
+    @Operation(
+            summary = "Listar notificaciones",
+            description = "Obtiene todas las notificaciones o permite filtrarlas por cliente, usuario o reserva."
+    )
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<?> findAll(
@@ -48,6 +60,10 @@ public class NotificacionController {
     }
 
     // http://localhost:8088/api/v1/notificaciones/1
+    @Operation(
+            summary = "Buscar notificación por ID",
+            description = "Obtiene una notificación específica según su identificador."
+    )
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Notificacion> findById(@PathVariable Long id) {
@@ -56,6 +72,10 @@ public class NotificacionController {
     }
 
     // http://localhost:8088/api/v1/notificaciones
+    @Operation(
+            summary = "Crear notificación",
+            description = "Registra una nueva notificación. Disponible solo para administradores."
+    )
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<Notificacion> guardar(
@@ -66,6 +86,10 @@ public class NotificacionController {
     }
 
     // http://localhost:8088/api/v1/notificaciones/1
+    @Operation(
+            summary = "Actualizar notificación",
+            description = "Actualiza una notificación existente. Disponible solo para administradores."
+    )
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Notificacion> actualizar(
@@ -78,6 +102,10 @@ public class NotificacionController {
     }
 
     // http://localhost:8088/api/v1/notificaciones/1
+    @Operation(
+            summary = "Eliminar notificación",
+            description = "Elimina una notificación según su identificador. Disponible solo para administradores."
+    )
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
