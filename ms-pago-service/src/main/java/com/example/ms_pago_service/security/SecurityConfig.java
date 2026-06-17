@@ -28,6 +28,15 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
+
+                        // Swagger / OpenAPI público
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
+                        // El resto de endpoints requiere JWT
                         .anyRequest().authenticated()
                 )
 
