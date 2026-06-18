@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -34,7 +36,12 @@ public class AuthController {
                 "message", "Usuario registrado correctamente",
                 "idUsuario", usuarioGuardado.getIdUsuario(),
                 "nombre", usuarioGuardado.getNombre(),
-                "rol", usuarioGuardado.getRol()
+                "rol", usuarioGuardado.getRol(),
+                "_links", Map.of(
+                        "login", linkTo(methodOn(AuthController.class).login(null)).withRel("login").getHref(),
+                        "validate", linkTo(methodOn(AuthController.class).validateToken()).withRel("validate-token").getHref(),
+                        "usuario", linkTo(methodOn(UsuarioController.class).findById(usuarioGuardado.getIdUsuario())).withRel("usuario-creado").getHref()
+                )
         ));
     }
 
@@ -57,17 +64,30 @@ public class AuthController {
             return ResponseEntity.ok(Map.of(
                     "token", token,
                     "nombre", usuario.getNombre(),
-                    "rol", usuario.getRol()
+                    "rol", usuario.getRol(),
+                    "_links", Map.of(
+                            "validate", linkTo(methodOn(AuthController.class).validateToken()).withRel("validate-token").getHref(),
+                            "usuario", linkTo(methodOn(UsuarioController.class).findById(usuario.getIdUsuario())).withRel("usuario").getHref()
+                    )
             ));
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                "error", "Credenciales inválidas"
+                "error", "Credenciales inválidas",
+                "_links", Map.of(
+                        "login", linkTo(methodOn(AuthController.class).login(null)).withRel("login").getHref()
+                )
         ));
     }
 
     @GetMapping("/validate")
     public ResponseEntity<?> validateToken() {
-        return ResponseEntity.ok(Map.of("valid", true));
+        return ResponseEntity.ok(Map.of(
+                "valid", true,
+                "_links", Map.of(
+                        "login", linkTo(methodOn(AuthController.class).login(null)).withRel("login").getHref(),
+                        "register", linkTo(methodOn(AuthController.class).register(null)).withRel("register").getHref()
+                )
+        ));
     }
 }
