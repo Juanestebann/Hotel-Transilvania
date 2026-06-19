@@ -9,6 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
 @RestController
 @RequestMapping("/api/v1/clientes")
 @RequiredArgsConstructor
@@ -25,14 +29,20 @@ public class ClienteController {
             @RequestParam(required = false) String tipoCliente
     ) {
         if (rolCliente != null) {
-            return ResponseEntity.status(HttpStatus.OK).body(clienteService.findByRolCliente(rolCliente));
+            List<Cliente> clientes = clienteService.findByRolCliente(rolCliente);
+            clientes.forEach(this::agregarLinksCliente);
+            return ResponseEntity.status(HttpStatus.OK).body(clientes);
         }
 
         if (tipoCliente != null) {
-            return ResponseEntity.status(HttpStatus.OK).body(clienteService.findByTipoCliente(tipoCliente));
+            List<Cliente> clientes = clienteService.findByTipoCliente(tipoCliente);
+            clientes.forEach(this::agregarLinksCliente);
+            return ResponseEntity.status(HttpStatus.OK).body(clientes);
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(clienteService.findAll());
+        List<Cliente> clientes = clienteService.findAll();
+        clientes.forEach(this::agregarLinksCliente);
+        return ResponseEntity.status(HttpStatus.OK).body(clientes);
     }
 
     // Solo ADMIN puede buscar clientes por ID
@@ -41,6 +51,7 @@ public class ClienteController {
     @GetMapping("/{id}")
     public ResponseEntity<Cliente> findById(@PathVariable Long id) {
         Cliente cliente = clienteService.findById(id);
+        agregarLinksCliente(cliente);
         return ResponseEntity.status(HttpStatus.OK).body(cliente);
     }
 
@@ -50,6 +61,7 @@ public class ClienteController {
     @GetMapping("/rut/{rutDocumento}")
     public ResponseEntity<Cliente> findByRutDocumento(@PathVariable String rutDocumento) {
         Cliente cliente = clienteService.findByRutDocumento(rutDocumento);
+        agregarLinksCliente(cliente);
         return ResponseEntity.status(HttpStatus.OK).body(cliente);
     }
 
@@ -59,6 +71,7 @@ public class ClienteController {
     @PostMapping
     public ResponseEntity<Cliente> guardarCliente(@Valid @RequestBody Cliente cliente) {
         Cliente nuevoCliente = clienteService.guardar(cliente);
+        agregarLinksCliente(nuevoCliente);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoCliente);
     }
 
@@ -71,6 +84,7 @@ public class ClienteController {
             @Valid @RequestBody Cliente cliente
     ) {
         Cliente clienteActualizado = clienteService.actualizar(id, cliente);
+        agregarLinksCliente(clienteActualizado);
         return ResponseEntity.status(HttpStatus.OK).body(clienteActualizado);
     }
 
@@ -81,5 +95,24 @@ public class ClienteController {
     public ResponseEntity<Void> eliminarCliente(@PathVariable Long id) {
         clienteService.eliminar(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    private void agregarLinksCliente(Cliente cliente) {
+        cliente.add(linkTo(methodOn(ClienteController.class)
+                .findById(cliente.getId())).withSelfRel());
+        cliente.add(linkTo(methodOn(ClienteController.class)
+                .findAll(null, null)).withRel("listar-todos"));
+        cliente.add(linkTo(methodOn(ClienteController.class)
+                .guardarCliente(null)).withRel("crear"));
+        cliente.add(linkTo(methodOn(ClienteController.class)
+                .actualizarCliente(cliente.getId(), null)).withRel("actualizar"));
+        cliente.add(linkTo(methodOn(ClienteController.class)
+                .eliminarCliente(cliente.getId())).withRel("eliminar"));
+        cliente.add(linkTo(methodOn(ClienteController.class)
+                .findByRutDocumento(cliente.getRutDocumento())).withRel("buscar-por-rut"));
+        cliente.add(linkTo(methodOn(ClienteController.class)
+                .findAll(cliente.getRolCliente(), null)).withRel("buscar-por-rol"));
+        cliente.add(linkTo(methodOn(ClienteController.class)
+                .findAll(null, cliente.getTipoCliente())).withRel("buscar-por-tipo"));
     }
 }

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.hateoas.RepresentationModel;
 
 import java.time.LocalDate;
 
@@ -14,7 +15,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Entity
 @Table(name = "disponibilidad")
-public class Disponibilidad {
+public class Disponibilidad extends RepresentationModel<Disponibilidad> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -4,8 +4,6 @@ import com.example.ms_reserva_service.model.Reserva;
 import com.example.ms_reserva_service.service.ReservaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,7 +22,7 @@ public class ReservaController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<CollectionModel<EntityModel<Reserva>>> findAll(
+    public ResponseEntity<List<Reserva>> findAll(
             @RequestParam(required = false) Long idCliente,
             @RequestParam(required = false) Long idUsuario,
             @RequestParam(required = false) Long idHotel,
@@ -47,85 +45,81 @@ public class ReservaController {
             reservas = reservaService.findAll();
         }
 
-        List<EntityModel<Reserva>> reservasConLinks = reservas.stream()
-                .map(this::agregarLinksReserva)
-                .toList();
+        reservas.forEach(this::agregarLinksReserva);
 
-        CollectionModel<EntityModel<Reserva>> respuesta = CollectionModel.of(
-                reservasConLinks,
-                linkTo(methodOn(ReservaController.class)
-                        .findAll(null, null, null, null, null)).withSelfRel()
-        );
-
-        return ResponseEntity.status(HttpStatus.OK).body(respuesta);
+        return ResponseEntity.status(HttpStatus.OK).body(reservas);
     }
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
-    public ResponseEntity<EntityModel<Reserva>> findById(@PathVariable Long id) {
+    public ResponseEntity<Reserva> findById(@PathVariable Long id) {
         Reserva reserva = reservaService.findById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(agregarLinksReserva(reserva));
+        agregarLinksReserva(reserva);
+
+        return ResponseEntity.status(HttpStatus.OK).body(reserva);
     }
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PostMapping
-    public ResponseEntity<EntityModel<Reserva>> guardarReserva(@Valid @RequestBody Reserva reserva) {
+    public ResponseEntity<Reserva> guardarReserva(@Valid @RequestBody Reserva reserva) {
         Reserva reservaGuardada = reservaService.guardar(reserva);
+        agregarLinksReserva(reservaGuardada);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(agregarLinksReserva(reservaGuardada));
+        return ResponseEntity.status(HttpStatus.CREATED).body(reservaGuardada);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<EntityModel<Reserva>> actualizarReserva(
+    public ResponseEntity<Reserva> actualizarReserva(
             @PathVariable Long id,
             @Valid @RequestBody Reserva reserva) {
 
         Reserva reservaActualizada = reservaService.actualizar(id, reserva);
+        agregarLinksReserva(reservaActualizada);
 
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(agregarLinksReserva(reservaActualizada));
+        return ResponseEntity.status(HttpStatus.OK).body(reservaActualizada);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarReserva(@PathVariable Long id) {
         reservaService.eliminar(id);
+
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PutMapping("/{id}/estado")
-    public ResponseEntity<EntityModel<Reserva>> cambiarEstado(
+    public ResponseEntity<Reserva> cambiarEstado(
             @PathVariable Long id,
             @RequestParam String estadoReserva) {
 
         Reserva reservaActualizada = reservaService.cambiarEstado(id, estadoReserva);
+        agregarLinksReserva(reservaActualizada);
 
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(agregarLinksReserva(reservaActualizada));
+        return ResponseEntity.status(HttpStatus.OK).body(reservaActualizada);
     }
 
-    private EntityModel<Reserva> agregarLinksReserva(Reserva reserva) {
-        return EntityModel.of(reserva,
-                linkTo(methodOn(ReservaController.class)
-                        .findById(reserva.getId())).withSelfRel(),
+    private void agregarLinksReserva(Reserva reserva) {
 
-                linkTo(methodOn(ReservaController.class)
-                        .findAll(null, null, null, null, null)).withRel("reservas"),
+        reserva.removeLinks();
 
-                linkTo(methodOn(ReservaController.class)
-                        .guardarReserva(null)).withRel("crear-reserva"),
+        reserva.add(linkTo(methodOn(ReservaController.class)
+                .findById(reserva.getId())).withSelfRel());
 
-                linkTo(methodOn(ReservaController.class)
-                        .actualizarReserva(reserva.getId(), null)).withRel("actualizar-reserva"),
+        reserva.add(linkTo(methodOn(ReservaController.class)
+                .findAll(null, null, null, null, null)).withRel("todas-las-reservas"));
 
-                linkTo(methodOn(ReservaController.class)
-                        .cambiarEstado(reserva.getId(), null)).withRel("cambiar-estado"),
+        reserva.add(linkTo(methodOn(ReservaController.class)
+                .guardarReserva(null)).withRel("crear-reserva"));
 
-                linkTo(methodOn(ReservaController.class)
-                        .eliminarReserva(reserva.getId())).withRel("eliminar-reserva")
-        );
+        reserva.add(linkTo(methodOn(ReservaController.class)
+                .actualizarReserva(reserva.getId(), null)).withRel("actualizar-reserva"));
+
+        reserva.add(linkTo(methodOn(ReservaController.class)
+                .cambiarEstado(reserva.getId(), null)).withRel("cambiar-estado"));
+
+        reserva.add(linkTo(methodOn(ReservaController.class)
+                .eliminarReserva(reserva.getId())).withRel("eliminar-reserva"));
     }
 }

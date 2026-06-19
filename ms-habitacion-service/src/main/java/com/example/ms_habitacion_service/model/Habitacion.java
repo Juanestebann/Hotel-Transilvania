@@ -6,13 +6,14 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.hateoas.RepresentationModel;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "habitacion")
-public class Habitacion {
+public class Habitacion extends RepresentationModel<Habitacion> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

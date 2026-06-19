@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
 @RestController
 @RequestMapping("/api/v1/habitaciones")
 @RequiredArgsConstructor
@@ -18,80 +20,116 @@ public class HabitacionController {
 
     private final HabitacionService habitacionService;
 
-    //http://localhost:8084/api/v1/habitaciones
     @GetMapping
     public ResponseEntity<List<Habitacion>> findAll() {
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(habitacionService.findAll());
+        List<Habitacion> habitaciones = habitacionService.findAll();
+
+        habitaciones.forEach(this::agregarLinksHabitacion);
+
+        return ResponseEntity.status(HttpStatus.OK).body(habitaciones);
     }
 
-    //http://localhost:8084/api/v1/habitaciones/1
-    //http://localhost:8084/api/v1/habitaciones/9999
     @GetMapping("/{id}")
     public ResponseEntity<Habitacion> findById(@PathVariable Long id) {
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(habitacionService.findById(id));
+        Habitacion habitacion = habitacionService.findById(id);
+
+        agregarLinksHabitacion(habitacion);
+
+        return ResponseEntity.status(HttpStatus.OK).body(habitacion);
     }
 
-    //http://localhost:8084/api/v1/habitaciones/estado/DISPONIBLE
     @GetMapping("/estado/{estadoHabitacion}")
     public ResponseEntity<List<Habitacion>> findByEstadoHabitacion(
             @PathVariable String estadoHabitacion) {
 
-        return ResponseEntity.ok(
-                habitacionService.findByEstadoHabitacion(estadoHabitacion)
-        );
+        List<Habitacion> habitaciones = habitacionService.findByEstadoHabitacion(estadoHabitacion);
+
+        habitaciones.forEach(this::agregarLinksHabitacion);
+
+        return ResponseEntity.ok(habitaciones);
     }
 
-    //http://localhost:8084/api/v1/habitaciones/capacidad/2
     @GetMapping("/capacidad/{capacidad}")
     public ResponseEntity<List<Habitacion>> findByCapacidadMinima(
             @PathVariable Integer capacidad) {
 
-        return ResponseEntity.ok(
-                habitacionService.findByCapacidadMinima(capacidad)
-        );
+        List<Habitacion> habitaciones = habitacionService.findByCapacidadMinima(capacidad);
+
+        habitaciones.forEach(this::agregarLinksHabitacion);
+
+        return ResponseEntity.ok(habitaciones);
     }
 
-    //http://localhost:8084/api/v1/habitaciones/hotel/1
     @GetMapping("/hotel/{idHotel}")
     public ResponseEntity<List<Habitacion>> findByIdHotel(
             @PathVariable Long idHotel) {
 
-        return ResponseEntity.ok(
-                habitacionService.findByIdHotel(idHotel)
-        );
+        List<Habitacion> habitaciones = habitacionService.findByIdHotel(idHotel);
+
+        habitaciones.forEach(this::agregarLinksHabitacion);
+
+        return ResponseEntity.ok(habitaciones);
     }
 
-    //http://localhost:8084/api/v1/habitaciones
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<Habitacion> guardarHabitacion(
             @Valid @RequestBody Habitacion habitacion) {
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(habitacionService.guardar(habitacion));
+        Habitacion habitacionGuardada = habitacionService.guardar(habitacion);
+
+        agregarLinksHabitacion(habitacionGuardada);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(habitacionGuardada);
     }
 
-    //http://localhost:8084/api/v1/habitaciones/1
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Habitacion> actualizarHabitacion(
             @PathVariable Long id,
             @Valid @RequestBody Habitacion habitacion) {
 
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(habitacionService.actualizar(id, habitacion));
+        Habitacion habitacionActualizada = habitacionService.actualizar(id, habitacion);
+
+        agregarLinksHabitacion(habitacionActualizada);
+
+        return ResponseEntity.status(HttpStatus.OK).body(habitacionActualizada);
     }
 
-    //http://localhost:8084/api/v1/habitaciones/2
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarHabitacion(@PathVariable Long id) {
-
         habitacionService.eliminar(id);
 
-        return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    private void agregarLinksHabitacion(Habitacion habitacion) {
+
+        habitacion.removeLinks();
+
+        habitacion.add(linkTo(methodOn(HabitacionController.class)
+                .findById(habitacion.getIdHabitacion())).withSelfRel());
+
+        habitacion.add(linkTo(methodOn(HabitacionController.class)
+                .findAll()).withRel("todas-las-habitaciones"));
+
+        habitacion.add(linkTo(methodOn(HabitacionController.class)
+                .findByEstadoHabitacion(habitacion.getEstadoHabitacion())).withRel("buscar-por-estado"));
+
+        habitacion.add(linkTo(methodOn(HabitacionController.class)
+                .findByCapacidadMinima(habitacion.getCapacidad())).withRel("buscar-por-capacidad"));
+
+        habitacion.add(linkTo(methodOn(HabitacionController.class)
+                .findByIdHotel(habitacion.getIdHotel())).withRel("buscar-por-hotel"));
+
+        habitacion.add(linkTo(methodOn(HabitacionController.class)
+                .guardarHabitacion(null)).withRel("crear-habitacion"));
+
+        habitacion.add(linkTo(methodOn(HabitacionController.class)
+                .actualizarHabitacion(habitacion.getIdHabitacion(), null)).withRel("actualizar-habitacion"));
+
+        habitacion.add(linkTo(methodOn(HabitacionController.class)
+                .eliminarHabitacion(habitacion.getIdHabitacion())).withRel("eliminar-habitacion"));
     }
 }

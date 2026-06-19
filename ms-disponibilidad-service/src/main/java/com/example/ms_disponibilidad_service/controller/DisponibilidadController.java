@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
 @RestController
 @RequestMapping("/api/v1/disponibilidades")
 @RequiredArgsConstructor
@@ -23,14 +25,18 @@ public class DisponibilidadController {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping
     public ResponseEntity<List<Disponibilidad>> findAll() {
-        return ResponseEntity.ok(disponibilidadService.findAll());
+        List<Disponibilidad> disponibilidades = disponibilidadService.findAll();
+        disponibilidades.forEach(this::agregarLinksDisponibilidad);
+        return ResponseEntity.ok(disponibilidades);
     }
 
     //http://localhost:8085/api/v1/disponibilidades/1
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Disponibilidad> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(disponibilidadService.findById(id));
+        Disponibilidad disponibilidad = disponibilidadService.findById(id);
+        agregarLinksDisponibilidad(disponibilidad);
+        return ResponseEntity.ok(disponibilidad);
     }
 
     //http://localhost:8085/api/v1/disponibilidades/habitacion/1/fecha/2026-05-21
@@ -40,9 +46,10 @@ public class DisponibilidadController {
             @PathVariable Long idHabitacion,
             @PathVariable LocalDate fecha) {
 
-        return ResponseEntity.ok(
-                disponibilidadService.findByIdHabitacionAndFecha(idHabitacion, fecha)
-        );
+        Disponibilidad disponibilidad =
+                disponibilidadService.findByIdHabitacionAndFecha(idHabitacion, fecha);
+        agregarLinksDisponibilidad(disponibilidad);
+        return ResponseEntity.ok(disponibilidad);
     }
 
     //http://localhost:8085/api/v1/disponibilidades
@@ -51,8 +58,10 @@ public class DisponibilidadController {
     public ResponseEntity<Disponibilidad> guardar(
             @Valid @RequestBody Disponibilidad disponibilidad) {
 
+        Disponibilidad nuevaDisponibilidad = disponibilidadService.guardar(disponibilidad);
+        agregarLinksDisponibilidad(nuevaDisponibilidad);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(disponibilidadService.guardar(disponibilidad));
+                .body(nuevaDisponibilidad);
     }
 
     //http://localhost:8085/api/v1/disponibilidades/18
@@ -62,9 +71,10 @@ public class DisponibilidadController {
             @PathVariable Long id,
             @Valid @RequestBody Disponibilidad disponibilidad) {
 
-        return ResponseEntity.ok(
-                disponibilidadService.actualizar(id, disponibilidad)
-        );
+        Disponibilidad disponibilidadActualizada =
+                disponibilidadService.actualizar(id, disponibilidad);
+        agregarLinksDisponibilidad(disponibilidadActualizada);
+        return ResponseEntity.ok(disponibilidadActualizada);
     }
 
     //http://localhost:8085/api/v1/disponibilidades/17
@@ -75,5 +85,23 @@ public class DisponibilidadController {
         disponibilidadService.eliminar(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    private void agregarLinksDisponibilidad(Disponibilidad disponibilidad) {
+        disponibilidad.add(linkTo(methodOn(DisponibilidadController.class)
+                .findById(disponibilidad.getId())).withSelfRel());
+        disponibilidad.add(linkTo(methodOn(DisponibilidadController.class)
+                .findAll()).withRel("listar-todos"));
+        disponibilidad.add(linkTo(methodOn(DisponibilidadController.class)
+                .guardar(null)).withRel("crear"));
+        disponibilidad.add(linkTo(methodOn(DisponibilidadController.class)
+                .actualizar(disponibilidad.getId(), null)).withRel("actualizar"));
+        disponibilidad.add(linkTo(methodOn(DisponibilidadController.class)
+                .eliminar(disponibilidad.getId())).withRel("eliminar"));
+        disponibilidad.add(linkTo(methodOn(DisponibilidadController.class)
+                .findByIdHabitacionAndFecha(
+                        disponibilidad.getIdHabitacion(),
+                        disponibilidad.getFecha()
+                )).withRel("buscar-por-habitacion-fecha"));
     }
 }
