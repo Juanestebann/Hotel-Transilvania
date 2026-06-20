@@ -1,0 +1,50 @@
+services:
+
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+
+  ms-resena-service:
+    build: ./ms-resena-service
+    container_name: ms-resena-service
+    ports:
+      - "8089:8089"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - eureka-server
+
+  ms-notificacion-service:
+    build: ./ms-notificacion-service
+    container_name: ms-notificacion-service
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - eureka-server
+
+  ms-servicio-adicional-service:
+    build: ./ms-servicio-adicional-service
+    container_name: ms-servicio-adicional-service
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - eureka-server
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - eureka-server
+      - ms-resena-service
+      - ms-notificacion-service
+      - ms-servicio-adicional-service
