@@ -6,6 +6,26 @@ services:
     ports:
       - "8761:8761"
 
+  ms-auth-usuarios-service:
+    build: ./ms-auth-usuarios-service
+    container_name: ms-auth-usuarios-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - eureka-server
+
+  ms-pago-service:
+    build: ./ms-pago-service
+    container_name: ms-pago-service
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - eureka-server
+
   ms-resena-service:
     build: ./ms-resena-service
     container_name: ms-resena-service
@@ -45,6 +65,8 @@ services:
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
       - eureka-server
+      - ms-auth-usuarios-service
+      - ms-pago-service
       - ms-resena-service
       - ms-notificacion-service
       - ms-servicio-adicional-service

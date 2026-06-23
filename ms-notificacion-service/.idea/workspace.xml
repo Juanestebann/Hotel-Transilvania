@@ -4,31 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9bd66620-8bbf-4b52-95bf-8328cc87f463" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../api-gateway/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../api-gateway/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../api-gateway/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../api-gateway/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-auth-usuarios-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-auth-usuarios-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-auth-usuarios-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-auth-usuarios-service/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-cliente-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-cliente-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-cliente-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-cliente-service/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-disponibilidad-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-disponibilidad-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-disponibilidad-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-disponibilidad-service/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-habitacion-service/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-habitacion-service/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-habitacion-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-habitacion-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-habitacion-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-habitacion-service/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-hotel-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-hotel-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-hotel-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-hotel-service/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-pago-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-pago-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-pago-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-pago-service/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-resena-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-resena-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-resena-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-resena-service/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-reserva-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-reserva-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-reserva-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-reserva-service/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-servicio-adicional-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-servicio-adicional-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ms-servicio-adicional-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../ms-servicio-adicional-service/src/main/resources/application.properties" afterDir="false" />
-    </list>
+    <list default="true" id="9bd66620-8bbf-4b52-95bf-8328cc87f463" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
