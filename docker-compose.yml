@@ -16,6 +16,56 @@ services:
     depends_on:
       - eureka-server
 
+  ms-cliente-service:
+    build: ./ms-cliente-service
+    container_name: ms-cliente-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - eureka-server
+
+  ms-hotel-service:
+    build: ./ms-hotel-service
+    container_name: ms-hotel-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - eureka-server
+
+  ms-habitacion-service:
+    build: ./ms-habitacion-service
+    container_name: ms-habitacion-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - eureka-server
+
+  ms-disponibilidad-service:
+    build: ./ms-disponibilidad-service
+    container_name: ms-disponibilidad-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - eureka-server
+
+  ms-reserva-service:
+    build: ./ms-reserva-service
+    container_name: ms-reserva-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - eureka-server
+
   ms-pago-service:
     build: ./ms-pago-service
     container_name: ms-pago-service
@@ -65,8 +115,3 @@ services:
       SPRING_PROFILES_ACTIVE: docker
     depends_on:
       - eureka-server
-      - ms-auth-usuarios-service
-      - ms-pago-service
-      - ms-resena-service
-      - ms-notificacion-service
-      - ms-servicio-adicional-service
