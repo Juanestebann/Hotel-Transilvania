@@ -1,8 +1,7 @@
 package com.example.ms_resena_service.service;
 
-import com.example.ms_resena_service.client.ClienteClient;
-import com.example.ms_resena_service.client.HabitacionClient;
-import com.example.ms_resena_service.client.HotelClient;
+import com.example.ms_resena_service.client.ReservaClient;
+import com.example.ms_resena_service.dto.ReservaDTO;
 import com.example.ms_resena_service.model.Resena;
 import com.example.ms_resena_service.repository.ResenaRepository;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -18,9 +18,7 @@ import java.util.NoSuchElementException;
 public class ResenaService {
 
     private final ResenaRepository resenaRepository;
-    private final ClienteClient clienteClient;
-    private final HotelClient hotelClient;
-    private final HabitacionClient habitacionClient;
+    private final ReservaClient reservaClient;
 
     public List<Resena> listarResenas() {
         log.info("Listando todas las reseñas");
@@ -30,6 +28,12 @@ public class ResenaService {
     public Resena buscarPorId(Long id) {
         log.info("Buscando reseña con id: {}", id);
 
+        Resena resena = buscarPorIdSinAutorizar(id);
+        reservaClient.obtenerReservaPorId(resena.getIdReserva());
+        return resena;
+    }
+
+    private Resena buscarPorIdSinAutorizar(Long id) {
         return resenaRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("No se encontró la reseña con id: {}", id);
@@ -41,14 +45,8 @@ public class ResenaService {
         log.info("Creando reseña para cliente id: {}, hotel id: {}, habitación id: {}",
                 resena.getIdCliente(), resena.getIdHotel(), resena.getIdHabitacion());
 
-        log.info("Validando cliente id: {}", resena.getIdCliente());
-        clienteClient.obtenerClientePorId(resena.getIdCliente());
-
-        log.info("Validando hotel id: {}", resena.getIdHotel());
-        hotelClient.obtenerHotelPorId(resena.getIdHotel());
-
-        log.info("Validando habitación id: {}", resena.getIdHabitacion());
-        habitacionClient.obtenerHabitacionPorId(resena.getIdHabitacion());
+        ReservaDTO reserva = reservaClient.obtenerReservaPorId(resena.getIdReserva());
+        validarYDerivarDatosReserva(resena, reserva);
 
         Resena resenaGuardada = resenaRepository.save(resena);
 
@@ -60,16 +58,11 @@ public class ResenaService {
     public Resena actualizarResena(Long id, Resena resenaActualizada) {
         log.info("Actualizando reseña con id: {}", id);
 
-        Resena resena = buscarPorId(id);
+        Resena resena = buscarPorIdSinAutorizar(id);
 
-        log.info("Validando cliente id: {}", resenaActualizada.getIdCliente());
-        clienteClient.obtenerClientePorId(resenaActualizada.getIdCliente());
-
-        log.info("Validando hotel id: {}", resenaActualizada.getIdHotel());
-        hotelClient.obtenerHotelPorId(resenaActualizada.getIdHotel());
-
-        log.info("Validando habitación id: {}", resenaActualizada.getIdHabitacion());
-        habitacionClient.obtenerHabitacionPorId(resenaActualizada.getIdHabitacion());
+        reservaClient.obtenerReservaPorId(resena.getIdReserva());
+        ReservaDTO reservaDestino = reservaClient.obtenerReservaPorId(resenaActualizada.getIdReserva());
+        validarYDerivarDatosReserva(resenaActualizada, reservaDestino);
 
         resena.setIdCliente(resenaActualizada.getIdCliente());
         resena.setIdHotel(resenaActualizada.getIdHotel());
@@ -89,7 +82,8 @@ public class ResenaService {
     public void eliminarResena(Long id) {
         log.warn("Solicitando eliminación de reseña con id: {}", id);
 
-        Resena resena = buscarPorId(id);
+        Resena resena = buscarPorIdSinAutorizar(id);
+        reservaClient.obtenerReservaPorId(resena.getIdReserva());
         resenaRepository.delete(resena);
 
         log.info("Reseña eliminada correctamente con id: {}", id);
@@ -112,6 +106,7 @@ public class ResenaService {
 
     public List<Resena> buscarPorReserva(Long idReserva) {
         log.info("Buscando reseñas por reserva id: {}", idReserva);
+        reservaClient.obtenerReservaPorId(idReserva);
         return resenaRepository.findByIdReserva(idReserva);
     }
 
@@ -123,5 +118,20 @@ public class ResenaService {
     public List<Resena> buscarPorEstado(String estadoResena) {
         log.info("Buscando reseñas por estado: {}", estadoResena);
         return resenaRepository.findByEstadoResena(estadoResena.toUpperCase());
+    }
+
+    private void validarYDerivarDatosReserva(Resena resena, ReservaDTO reserva) {
+        if (reserva == null
+                || !Objects.equals(resena.getIdCliente(), reserva.getIdCliente())
+                || !Objects.equals(resena.getIdHotel(), reserva.getIdHotel())
+                || !Objects.equals(resena.getIdHabitacion(), reserva.getIdHabitacion())) {
+            throw new IllegalArgumentException(
+                    "Cliente, hotel y habitación deben coincidir con la reserva"
+            );
+        }
+
+        resena.setIdCliente(reserva.getIdCliente());
+        resena.setIdHotel(reserva.getIdHotel());
+        resena.setIdHabitacion(reserva.getIdHabitacion());
     }
 }

@@ -2,6 +2,7 @@ package com.example.ms_resena_service.exception;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -64,8 +65,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResponseStatusException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, Object> manejarResponseStatusException(ResponseStatusException ex) {
+    public ResponseEntity<Map<String, Object>> manejarResponseStatusException(ResponseStatusException ex) {
 
         Map<String, Object> error = new HashMap<>();
 
@@ -73,7 +73,7 @@ public class GlobalExceptionHandler {
         error.put("status", ex.getStatusCode().value());
         error.put("message", ex.getReason());
 
-        return error;
+        return ResponseEntity.status(ex.getStatusCode()).body(error);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

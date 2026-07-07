@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 
@@ -68,6 +69,29 @@ class DisponibilidadServiceTest {
 
         verify(habitacionClient).obtenerHabitacionPorId(1L);
         verify(repository).save(disponibilidad);
+    }
+
+    @Test
+    void deberiaActualizarSoloEstadoDesdeFlujoInterno() {
+        Disponibilidad disponibilidad = crearDisponibilidad();
+        Mockito.when(repository.findById(1L)).thenReturn(Optional.of(disponibilidad));
+        Mockito.when(repository.save(disponibilidad)).thenReturn(disponibilidad);
+
+        Disponibilidad resultado = service.actualizarEstadoInterno(1L, "OCUPADA");
+
+        assertEquals("OCUPADA", resultado.getEstado());
+        assertEquals(1L, resultado.getIdHabitacion());
+        assertEquals(LocalDate.of(2026, 6, 20), resultado.getFecha());
+        verify(repository).findById(1L);
+        verify(repository).save(disponibilidad);
+    }
+
+    @Test
+    void flujoInternoNoPuedeAsignarMantenimiento() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.actualizarEstadoInterno(1L, "MANTENIMIENTO")
+        );
     }
 
     private Disponibilidad crearDisponibilidad() {

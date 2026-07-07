@@ -33,7 +33,7 @@ public class ResenaController {
             summary = "Listar reseñas",
             description = "Obtiene todas las reseñas registradas en el sistema."
     )
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<Resena>> listarResenas() {
         List<Resena> resenas = resenaService.listarResenas();
@@ -103,7 +103,7 @@ public class ResenaController {
             summary = "Buscar reseñas por cliente",
             description = "Obtiene todas las reseñas asociadas a un cliente específico."
     )
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/cliente/{idCliente}")
     public ResponseEntity<List<Resena>> buscarPorCliente(@PathVariable Long idCliente) {
         List<Resena> resenas = resenaService.buscarPorCliente(idCliente);
@@ -117,7 +117,7 @@ public class ResenaController {
             summary = "Buscar reseñas por hotel",
             description = "Obtiene todas las reseñas asociadas a un hotel específico."
     )
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/hotel/{idHotel}")
     public ResponseEntity<List<Resena>> buscarPorHotel(@PathVariable Long idHotel) {
         List<Resena> resenas = resenaService.buscarPorHotel(idHotel);
@@ -131,7 +131,7 @@ public class ResenaController {
             summary = "Buscar reseñas por habitación",
             description = "Obtiene todas las reseñas asociadas a una habitación específica."
     )
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/habitacion/{idHabitacion}")
     public ResponseEntity<List<Resena>> buscarPorHabitacion(@PathVariable Long idHabitacion) {
         List<Resena> resenas = resenaService.buscarPorHabitacion(idHabitacion);
@@ -159,7 +159,7 @@ public class ResenaController {
             summary = "Buscar reseñas por calificación",
             description = "Obtiene las reseñas filtradas por calificación."
     )
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/calificacion/{calificacion}")
     public ResponseEntity<List<Resena>> buscarPorCalificacion(@PathVariable Integer calificacion) {
         List<Resena> resenas = resenaService.buscarPorCalificacion(calificacion);

@@ -1,5 +1,6 @@
 package com.example.ms_auth_usuarios_service.controller;
 
+import com.example.ms_auth_usuarios_service.dto.UsuarioResponseDTO;
 import com.example.ms_auth_usuarios_service.model.Usuario;
 import com.example.ms_auth_usuarios_service.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +21,13 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioResponseDTO> findCurrentUser(Authentication authentication) {
+        Usuario usuario = usuarioService.findAuthenticatedByNombre(authentication.getName());
+        return ResponseEntity.ok(UsuarioResponseDTO.from(usuario));
+    }
 
     // Solo ADMIN puede listar todos los usuarios
     // http://localhost:8081/api/v1/usuarios

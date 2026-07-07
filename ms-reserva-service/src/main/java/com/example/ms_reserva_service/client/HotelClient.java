@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
@@ -27,12 +28,14 @@ public class HotelClient {
                 .uri("/{id}", idHotel)
                 .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, response ->
-                        Mono.error(new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Hotel no encontrado con id: " + idHotel
-                        ))
-                )
+                .onStatus(HttpStatusCode::is4xxClientError, response -> {
+                    HttpStatusCode status = response.statusCode();
+                    String mensaje = status.value() == HttpStatus.NOT_FOUND.value()
+                            ? "Hotel no encontrado con id: " + idHotel
+                            : "Hotel-service rechazó la solicitud con estado " + status.value();
+
+                    return Mono.error(new ResponseStatusException(status, mensaje));
+                })
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         Mono.error(new ResponseStatusException(
                                 HttpStatus.SERVICE_UNAVAILABLE,
@@ -40,6 +43,16 @@ public class HotelClient {
                         ))
                 )
                 .bodyToMono(HotelDTO.class)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "Hotel-service devolvió una respuesta vacía"
+                )))
+                .onErrorMap(WebClientRequestException.class, exception ->
+                        new ResponseStatusException(
+                                HttpStatus.SERVICE_UNAVAILABLE,
+                                "No fue posible comunicarse con hotel-service",
+                                exception
+                        ))
                 .block();
     }
 }

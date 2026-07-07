@@ -7,16 +7,20 @@ import com.example.ms_reserva_service.client.HotelClient;
 import com.example.ms_reserva_service.client.UsuarioClient;
 import com.example.ms_reserva_service.dto.DisponibilidadDTO;
 import com.example.ms_reserva_service.dto.HabitacionDTO;
+import com.example.ms_reserva_service.dto.UsuarioDTO;
 import com.example.ms_reserva_service.model.Reserva;
 import com.example.ms_reserva_service.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -38,6 +42,15 @@ public class ReservaService {
     public Reserva findById(Long id) {
         log.info("Buscando reserva con id: {}", id);
 
+        UsuarioDTO usuarioActual = usuarioClient.obtenerUsuarioActual();
+        Reserva reserva = buscarPorId(id);
+
+        validarAccesoAReserva(usuarioActual, reserva);
+
+        return reserva;
+    }
+
+    private Reserva buscarPorId(Long id) {
         return reservaRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Reserva no encontrada con id: {}", id);
@@ -77,7 +90,10 @@ public class ReservaService {
                 reserva.getIdHotel(),
                 reserva.getIdHabitacion());
 
-        validarReservaCompleta(reserva);
+        UsuarioDTO usuarioActual = usuarioClient.obtenerUsuarioActual();
+        boolean validarUsuarioDestino = prepararCreacionSegunRol(reserva, usuarioActual);
+
+        validarReservaCompleta(reserva, validarUsuarioDestino);
 
         reserva.setEstadoReserva(reserva.getEstadoReserva().toUpperCase());
         reserva.setFechaCreacion(LocalDateTime.now());
@@ -106,7 +122,7 @@ public class ReservaService {
             liberarDisponibilidadReserva(reservaExistente);
         }
 
-        validarReservaCompleta(reservaActualizada);
+        validarReservaCompleta(reservaActualizada, true);
 
         reservaExistente.setIdCliente(reservaActualizada.getIdCliente());
         reservaExistente.setIdUsuario(reservaActualizada.getIdUsuario());
@@ -144,7 +160,7 @@ public class ReservaService {
         log.info("Reserva eliminada correctamente con id: {}", id);
     }
 
-    private void validarReservaCompleta(Reserva reserva) {
+    private void validarReservaCompleta(Reserva reserva, boolean validarUsuarioDestino) {
         log.info("Validando reserva completa");
 
         validarEstadoReserva(reserva);
@@ -154,8 +170,12 @@ public class ReservaService {
         log.info("Validando cliente id: {}", reserva.getIdCliente());
         clienteClient.obtenerClientePorId(reserva.getIdCliente());
 
-        log.info("Validando usuario id: {}", reserva.getIdUsuario());
-        usuarioClient.obtenerUsuarioPorId(reserva.getIdUsuario());
+        if (validarUsuarioDestino) {
+            log.info("Validando usuario destino id: {}", reserva.getIdUsuario());
+            usuarioClient.obtenerUsuarioPorId(reserva.getIdUsuario());
+        } else {
+            log.info("Usuario de la reserva validado mediante /usuarios/me");
+        }
 
         log.info("Validando hotel id: {}", reserva.getIdHotel());
         hotelClient.obtenerHotelPorId(reserva.getIdHotel());
@@ -355,7 +375,35 @@ public class ReservaService {
     public Reserva cambiarEstado(Long id, String estadoReserva) {
         log.info("Cambiando estado de reserva id: {} a {}", id, estadoReserva);
 
-        Reserva reserva = findById(id);
+        UsuarioDTO usuarioActual = usuarioClient.obtenerUsuarioActual();
+        Reserva reserva = buscarPorId(id);
+
+        validarAccesoAReserva(usuarioActual, reserva);
+
+        if (esRol(usuarioActual, "USER") && !"CANCELADA".equalsIgnoreCase(estadoReserva)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Un USER solo puede cancelar una reserva propia"
+            );
+        }
+
+        return aplicarCambioEstado(reserva, estadoReserva);
+    }
+
+    public Reserva cambiarEstadoInterno(Long id, String estadoReserva) {
+        if (!"CONFIRMADA".equalsIgnoreCase(estadoReserva)
+                && !"CANCELADA".equalsIgnoreCase(estadoReserva)) {
+            throw new IllegalArgumentException(
+                    "El flujo interno de pago solo permite CONFIRMADA o CANCELADA"
+            );
+        }
+
+        Reserva reserva = buscarPorId(id);
+        return aplicarCambioEstado(reserva, estadoReserva);
+    }
+
+    private Reserva aplicarCambioEstado(Reserva reserva, String estadoReserva) {
+        Long id = reserva.getId();
         String estadoAnterior = reserva.getEstadoReserva();
         String nuevoEstado = estadoReserva.toUpperCase();
 
@@ -385,5 +433,51 @@ public class ReservaService {
         log.info("Estado actualizado correctamente para reserva id: {}", id);
 
         return reservaGuardada;
+    }
+
+    private boolean prepararCreacionSegunRol(Reserva reserva, UsuarioDTO usuarioActual) {
+        if (esRol(usuarioActual, "ADMIN")) {
+            return true;
+        }
+
+        if (!esRol(usuarioActual, "USER")) {
+            throw accesoDenegado("Rol de usuario no autorizado para crear reservas");
+        }
+
+        if (!Objects.equals(usuarioActual.getIdUsuario(), reserva.getIdUsuario())) {
+            throw accesoDenegado("No puedes crear una reserva para otro usuario");
+        }
+
+        if (!"PENDIENTE".equalsIgnoreCase(reserva.getEstadoReserva())) {
+            throw accesoDenegado("Las reservas creadas por USER deben iniciar en estado PENDIENTE");
+        }
+
+        reserva.setIdUsuario(usuarioActual.getIdUsuario());
+        reserva.setEstadoReserva("PENDIENTE");
+        return false;
+    }
+
+    private void validarAccesoAReserva(UsuarioDTO usuarioActual, Reserva reserva) {
+        if (esRol(usuarioActual, "ADMIN")) {
+            return;
+        }
+
+        if (!esRol(usuarioActual, "USER")
+                || !Objects.equals(usuarioActual.getIdUsuario(), reserva.getIdUsuario())) {
+            throw accesoDenegado("No puedes acceder a una reserva de otro usuario");
+        }
+    }
+
+    private boolean esRol(UsuarioDTO usuario, String rolEsperado) {
+        if (usuario == null || usuario.getRol() == null) {
+            return false;
+        }
+
+        String rol = usuario.getRol().toUpperCase();
+        return rolEsperado.equals(rol) || ("ROLE_" + rolEsperado).equals(rol);
+    }
+
+    private ResponseStatusException accesoDenegado(String mensaje) {
+        return new ResponseStatusException(HttpStatus.FORBIDDEN, mensaje);
     }
 }

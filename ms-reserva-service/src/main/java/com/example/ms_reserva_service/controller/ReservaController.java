@@ -100,6 +100,16 @@ public class ReservaController {
         return ResponseEntity.status(HttpStatus.OK).body(reservaActualizada);
     }
 
+    @PreAuthorize("hasRole('SERVICE') and authentication.name == 'ms-pago-service'")
+    @PutMapping("/internal/{id}/estado")
+    public ResponseEntity<Reserva> cambiarEstadoDesdePago(
+            @PathVariable Long id,
+            @RequestParam String estadoReserva) {
+
+        Reserva reservaActualizada = reservaService.cambiarEstadoInterno(id, estadoReserva);
+        return ResponseEntity.ok(reservaActualizada);
+    }
+
     private void agregarLinksReserva(Reserva reserva) {
 
         reserva.removeLinks();

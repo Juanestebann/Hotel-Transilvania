@@ -1,5 +1,6 @@
 package com.example.ms_cliente_service.controller;
 
+import com.example.ms_cliente_service.dto.ClienteValidacionDTO;
 import com.example.ms_cliente_service.model.Cliente;
 import com.example.ms_cliente_service.service.ClienteService;
 import jakarta.validation.Valid;
@@ -19,6 +20,12 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 public class ClienteController {
 
     private final ClienteService clienteService;
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/{id}/validacion")
+    public ResponseEntity<ClienteValidacionDTO> validarExistencia(@PathVariable Long id) {
+        return ResponseEntity.ok(clienteService.validarExistenciaCliente(id));
+    }
 
     // Solo ADMIN puede listar clientes o filtrar por rol/tipo
     // http://localhost:8082/api/v1/clientes

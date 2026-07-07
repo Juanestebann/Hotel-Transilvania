@@ -1,5 +1,6 @@
 package com.example.ms_disponibilidad_service.controller;
 
+import com.example.ms_disponibilidad_service.dto.DisponibilidadEstadoDTO;
 import com.example.ms_disponibilidad_service.model.Disponibilidad;
 import com.example.ms_disponibilidad_service.service.DisponibilidadService;
 import jakarta.validation.Valid;
@@ -65,7 +66,7 @@ public class DisponibilidadController {
     }
 
     //http://localhost:8085/api/v1/disponibilidades/18
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Disponibilidad> actualizar(
             @PathVariable Long id,
@@ -74,6 +75,18 @@ public class DisponibilidadController {
         Disponibilidad disponibilidadActualizada =
                 disponibilidadService.actualizar(id, disponibilidad);
         agregarLinksDisponibilidad(disponibilidadActualizada);
+        return ResponseEntity.ok(disponibilidadActualizada);
+    }
+
+    @PreAuthorize("hasRole('SERVICE') and authentication.name == 'ms-reserva-service'")
+    @PutMapping("/internal/{id}")
+    public ResponseEntity<Disponibilidad> actualizarEstadoInterno(
+            @PathVariable Long id,
+            @Valid @RequestBody DisponibilidadEstadoDTO solicitud) {
+
+        Disponibilidad disponibilidadActualizada =
+                disponibilidadService.actualizarEstadoInterno(id, solicitud.estado());
+
         return ResponseEntity.ok(disponibilidadActualizada);
     }
 

@@ -44,6 +44,16 @@ public class UsuarioService {
         return usuarioRepository.findByNombre(nombre);
     }
 
+    public Usuario findAuthenticatedByNombre(String nombre) {
+        log.info("Buscando identidad del usuario autenticado: {}", nombre);
+
+        return usuarioRepository.findByNombre(nombre)
+                .orElseThrow(() -> {
+                    log.error("Usuario autenticado no encontrado con nombre: {}", nombre);
+                    return new NoSuchElementException("Usuario autenticado no encontrado");
+                });
+    }
+
     public Usuario register(Usuario usuario) {
         log.info("Registro público de usuario: {}", usuario.getNombre());
         usuario.setRol("USER");

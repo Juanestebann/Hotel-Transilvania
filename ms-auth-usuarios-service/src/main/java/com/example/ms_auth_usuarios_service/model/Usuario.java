@@ -1,5 +1,6 @@
 package com.example.ms_auth_usuarios_service.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -24,6 +25,7 @@ public class Usuario extends RepresentationModel<Usuario> {
 
     @NotBlank(message = "La contraseña no puede estar vacía")
     @Column(nullable = false)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @NotBlank(message = "El rol no puede estar vacío")

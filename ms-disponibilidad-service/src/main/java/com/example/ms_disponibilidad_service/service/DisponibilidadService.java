@@ -100,6 +100,29 @@ public class DisponibilidadService {
         return disponibilidadGuardada;
     }
 
+    public Disponibilidad actualizarEstadoInterno(Long id, String estado) {
+        log.info("Actualizando internamente el estado de disponibilidad id: {}", id);
+
+        validarEstadoInterno(estado);
+
+        Disponibilidad existente = findById(id);
+        existente.setEstado(estado.toUpperCase());
+
+        Disponibilidad disponibilidadGuardada = disponibilidadRepository.save(existente);
+
+        log.info("Estado de disponibilidad actualizado internamente para id: {}", id);
+        return disponibilidadGuardada;
+    }
+
+    private void validarEstadoInterno(String estado) {
+        if (!"DISPONIBLE".equalsIgnoreCase(estado)
+                && !"OCUPADA".equalsIgnoreCase(estado)) {
+            throw new IllegalArgumentException(
+                    "El flujo interno de reserva solo permite DISPONIBLE u OCUPADA"
+            );
+        }
+    }
+
     public void eliminar(Long id) {
 
         log.warn("Eliminando disponibilidad con id: {}", id);

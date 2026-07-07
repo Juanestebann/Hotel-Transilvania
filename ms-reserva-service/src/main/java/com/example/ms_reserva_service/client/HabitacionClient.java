@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
@@ -28,12 +29,14 @@ public class HabitacionClient {
                 .uri("/{id}", id)
                 .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, response ->
-                        Mono.error(new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Habitación no encontrada con id: " + id
-                        ))
-                )
+                .onStatus(HttpStatusCode::is4xxClientError, response -> {
+                    HttpStatusCode status = response.statusCode();
+                    String mensaje = status.value() == HttpStatus.NOT_FOUND.value()
+                            ? "Habitación no encontrada con id: " + id
+                            : "Habitación-service rechazó la solicitud con estado " + status.value();
+
+                    return Mono.error(new ResponseStatusException(status, mensaje));
+                })
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
                         Mono.error(new ResponseStatusException(
                                 HttpStatus.SERVICE_UNAVAILABLE,
@@ -41,6 +44,16 @@ public class HabitacionClient {
                         ))
                 )
                 .bodyToMono(HabitacionDTO.class)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(
+                        HttpStatus.SERVICE_UNAVAILABLE,
+                        "Habitación-service devolvió una respuesta vacía"
+                )))
+                .onErrorMap(WebClientRequestException.class, exception ->
+                        new ResponseStatusException(
+                                HttpStatus.SERVICE_UNAVAILABLE,
+                                "No fue posible comunicarse con habitación-service",
+                                exception
+                        ))
                 .block();
     }
 }

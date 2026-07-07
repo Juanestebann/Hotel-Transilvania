@@ -1,5 +1,6 @@
 package com.example.ms_cliente_service.service;
 
+import com.example.ms_cliente_service.dto.ClienteValidacionDTO;
 import com.example.ms_cliente_service.model.Cliente;
 import com.example.ms_cliente_service.repository.ClienteRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,17 @@ public class ClienteService {
                     log.error("Cliente no encontrado con id: {}", id);
                     return new NoSuchElementException("Cliente no encontrado con id: " + id);
                 });
+    }
+
+    public ClienteValidacionDTO validarExistenciaCliente(Long id) {
+        log.info("Validando existencia de cliente con id: {}", id);
+
+        if (!clienteRepository.existsById(id)) {
+            log.error("Cliente no encontrado con id: {}", id);
+            throw new NoSuchElementException("Cliente no encontrado con id: " + id);
+        }
+
+        return new ClienteValidacionDTO(id, true);
     }
 
     public Cliente findByRutDocumento(String rutDocumento) {

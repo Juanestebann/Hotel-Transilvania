@@ -1,8 +1,7 @@
 package com.example.ms_resena_service.service;
 
-import com.example.ms_resena_service.client.ClienteClient;
-import com.example.ms_resena_service.client.HabitacionClient;
-import com.example.ms_resena_service.client.HotelClient;
+import com.example.ms_resena_service.client.ReservaClient;
+import com.example.ms_resena_service.dto.ReservaDTO;
 import com.example.ms_resena_service.model.Resena;
 import com.example.ms_resena_service.repository.ResenaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +11,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -27,13 +28,7 @@ class ResenaServiceTest {
     private ResenaRepository resenaRepository;
 
     @Mock
-    private ClienteClient clienteClient;
-
-    @Mock
-    private HotelClient hotelClient;
-
-    @Mock
-    private HabitacionClient habitacionClient;
+    private ReservaClient reservaClient;
 
     @InjectMocks
     private ResenaService resenaService;
@@ -75,6 +70,7 @@ class ResenaServiceTest {
     void debeBuscarResenaPorIdCuandoExiste() {
         // Given
         when(resenaRepository.findById(1L)).thenReturn(Optional.of(resena));
+        when(reservaClient.obtenerReservaPorId(1L)).thenReturn(crearReserva(1L, 1L, 1L));
 
         // When
         Resena resultado = resenaService.buscarPorId(1L);
@@ -106,9 +102,10 @@ class ResenaServiceTest {
     }
 
     @Test
-    @DisplayName("Debe guardar una reseña validando cliente, hotel y habitación")
-    void debeGuardarResenaValidandoClienteHotelYHabitacion() {
+    @DisplayName("Debe guardar una reseña validando la reserva como fuente de verdad")
+    void debeGuardarResenaValidandoReserva() {
         // Given
+        when(reservaClient.obtenerReservaPorId(1L)).thenReturn(crearReserva(1L, 1L, 1L));
         when(resenaRepository.save(resena)).thenReturn(resena);
 
         // When
@@ -119,9 +116,7 @@ class ResenaServiceTest {
         assertEquals(1L, resultado.getId());
         assertEquals("Excelente atención", resultado.getComentario());
 
-        verify(clienteClient, times(1)).obtenerClientePorId(1L);
-        verify(hotelClient, times(1)).obtenerHotelPorId(1L);
-        verify(habitacionClient, times(1)).obtenerHabitacionPorId(1L);
+        verify(reservaClient).obtenerReservaPorId(1L);
         verify(resenaRepository, times(1)).save(resena);
     }
 
@@ -130,6 +125,7 @@ class ResenaServiceTest {
     void debeEliminarResenaExistente() {
         // Given
         when(resenaRepository.findById(1L)).thenReturn(Optional.of(resena));
+        when(reservaClient.obtenerReservaPorId(1L)).thenReturn(crearReserva(1L, 1L, 1L));
 
         // When
         resenaService.eliminarResena(1L);
@@ -137,6 +133,91 @@ class ResenaServiceTest {
         // Then
         verify(resenaRepository, times(1)).findById(1L);
         verify(resenaRepository, times(1)).delete(resena);
+    }
+
+    @Test
+    void userNoPuedeCrearResenaSobreReservaAjena() {
+        when(reservaClient.obtenerReservaPorId(1L))
+                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Reserva ajena"));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> resenaService.guardarResena(resena)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        verify(resenaRepository, never()).save(resena);
+    }
+
+    @Test
+    void noPermiteIdsQueNoCoincidenConReserva() {
+        when(reservaClient.obtenerReservaPorId(1L)).thenReturn(crearReserva(2L, 1L, 1L));
+
+        assertThrows(IllegalArgumentException.class, () -> resenaService.guardarResena(resena));
+
+        verify(resenaRepository, never()).save(resena);
+    }
+
+    @Test
+    void userNoPuedeConsultarResenaAjena() {
+        when(resenaRepository.findById(1L)).thenReturn(Optional.of(resena));
+        when(reservaClient.obtenerReservaPorId(1L))
+                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Reserva ajena"));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> resenaService.buscarPorId(1L)
+        );
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+    }
+
+    @Test
+    void userPuedeActualizarResenaPropia() {
+        Resena actualizada = crearResenaActualizada();
+        when(resenaRepository.findById(1L)).thenReturn(Optional.of(resena));
+        when(reservaClient.obtenerReservaPorId(1L)).thenReturn(crearReserva(1L, 1L, 1L));
+        when(resenaRepository.save(resena)).thenReturn(resena);
+
+        Resena resultado = resenaService.actualizarResena(1L, actualizada);
+
+        assertEquals("Comentario actualizado", resultado.getComentario());
+        verify(resenaRepository).save(resena);
+    }
+
+    @Test
+    void userNoPuedeActualizarResenaAjena() {
+        when(resenaRepository.findById(1L)).thenReturn(Optional.of(resena));
+        when(reservaClient.obtenerReservaPorId(1L))
+                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Reserva ajena"));
+
+        assertThrows(
+                ResponseStatusException.class,
+                () -> resenaService.actualizarResena(1L, crearResenaActualizada())
+        );
+
+        verify(resenaRepository, never()).save(any());
+    }
+
+    @Test
+    void userNoPuedeEliminarResenaAjena() {
+        when(resenaRepository.findById(1L)).thenReturn(Optional.of(resena));
+        when(reservaClient.obtenerReservaPorId(1L))
+                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Reserva ajena"));
+
+        assertThrows(ResponseStatusException.class, () -> resenaService.eliminarResena(1L));
+
+        verify(resenaRepository, never()).delete(any());
+    }
+
+    @Test
+    void adminPuedeGestionarResenaDeCualquierReserva() {
+        when(resenaRepository.findById(1L)).thenReturn(Optional.of(resena));
+        when(reservaClient.obtenerReservaPorId(1L)).thenReturn(crearReserva(1L, 1L, 1L));
+
+        Resena resultado = resenaService.buscarPorId(1L);
+
+        assertEquals(1L, resultado.getId());
     }
 
     @Test
@@ -154,5 +235,28 @@ class ResenaServiceTest {
         assertEquals("APROBADA", resultado.get(0).getEstadoResena());
 
         verify(resenaRepository, times(1)).findByEstadoResena("APROBADA");
+    }
+
+    private ReservaDTO crearReserva(Long idCliente, Long idHotel, Long idHabitacion) {
+        ReservaDTO reserva = new ReservaDTO();
+        reserva.setId(1L);
+        reserva.setIdUsuario(1L);
+        reserva.setIdCliente(idCliente);
+        reserva.setIdHotel(idHotel);
+        reserva.setIdHabitacion(idHabitacion);
+        reserva.setEstadoReserva("FINALIZADA");
+        return reserva;
+    }
+
+    private Resena crearResenaActualizada() {
+        Resena actualizada = new Resena();
+        actualizada.setIdCliente(1L);
+        actualizada.setIdHotel(1L);
+        actualizada.setIdHabitacion(1L);
+        actualizada.setIdReserva(1L);
+        actualizada.setCalificacion(4);
+        actualizada.setComentario("Comentario actualizado");
+        actualizada.setEstadoResena("APROBADA");
+        return actualizada;
     }
 }

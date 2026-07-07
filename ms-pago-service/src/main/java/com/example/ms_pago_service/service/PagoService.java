@@ -2,15 +2,20 @@ package com.example.ms_pago_service.service;
 
 import com.example.ms_pago_service.client.ReservaClient;
 import com.example.ms_pago_service.client.UsuarioClient;
+import com.example.ms_pago_service.dto.ReservaDTO;
+import com.example.ms_pago_service.dto.UsuarioDTO;
 import com.example.ms_pago_service.model.Pago;
 import com.example.ms_pago_service.repository.PagoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -29,6 +34,15 @@ public class PagoService {
     public Pago findById(Long id) {
         log.info("Buscando pago con id: {}", id);
 
+        UsuarioDTO usuarioActual = usuarioClient.obtenerUsuarioActual();
+        Pago pago = buscarPorId(id);
+
+        validarAccesoAPago(usuarioActual, pago);
+
+        return pago;
+    }
+
+    private Pago buscarPorId(Long id) {
         return pagoRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Pago no encontrado con id: {}", id);
@@ -54,13 +68,20 @@ public class PagoService {
 
         pago.setEstadoPago(pago.getEstadoPago().toUpperCase());
 
+        UsuarioDTO usuarioActual = usuarioClient.obtenerUsuarioActual();
+        boolean validarUsuarioDestino = prepararIdentidadPago(pago, usuarioActual);
+
         log.info("Validando existencia de reserva id: {}", pago.getReservaId());
-        reservaClient.obtenerReservaPorId(pago.getReservaId());
+        ReservaDTO reserva = reservaClient.obtenerReservaPorId(pago.getReservaId());
+        validarPropiedadReserva(pago, reserva, usuarioActual);
         log.info("Reserva validada correctamente con id: {}", pago.getReservaId());
 
-        log.info("Validando existencia de usuario id: {}", pago.getIdUsuario());
-        usuarioClient.obtenerUsuarioPorId(pago.getIdUsuario());
-        log.info("Usuario validado correctamente con id: {}", pago.getIdUsuario());
+        if (validarUsuarioDestino) {
+            log.info("Validando existencia de usuario destino id: {}", pago.getIdUsuario());
+            usuarioClient.obtenerUsuarioPorId(pago.getIdUsuario());
+        }
+
+        validarReservaNoPagada(pago.getReservaId());
 
         Pago pagoGuardado = pagoRepository.save(pago);
         actualizarEstadoReservaSegunPago(pagoGuardado);
@@ -78,7 +99,7 @@ public class PagoService {
     public Pago update(Long id, Pago pagoActualizado) {
         log.info("Actualizando pago con id: {}", id);
 
-        Pago pago = findById(id);
+        Pago pago = buscarPorId(id);
 
         if (pagoActualizado.getFechaPago() == null) {
             pagoActualizado.setFechaPago(LocalDateTime.now());
@@ -118,7 +139,7 @@ public class PagoService {
     public void delete(Long id) {
         log.warn("Solicitando eliminación de pago con id: {}", id);
 
-        Pago pago = findById(id);
+        Pago pago = buscarPorId(id);
 
         pagoRepository.delete(pago);
 
@@ -127,7 +148,37 @@ public class PagoService {
 
     public List<Pago> findByReservaId(Long reservaId) {
         log.info("Buscando pagos asociados a reserva id: {}", reservaId);
-        return pagoRepository.findByReservaId(reservaId);
+
+        UsuarioDTO usuarioActual = usuarioClient.obtenerUsuarioActual();
+
+        if (esRol(usuarioActual, "ADMIN")) {
+            return pagoRepository.findByReservaId(reservaId);
+        }
+
+        if (!esRol(usuarioActual, "USER")) {
+            throw accesoDenegado("Rol no autorizado para consultar pagos");
+        }
+
+        ReservaDTO reserva = reservaClient.obtenerReservaPorId(reservaId);
+
+        if (reserva == null
+                || !Objects.equals(reserva.getIdUsuario(), usuarioActual.getIdUsuario())) {
+            throw accesoDenegado("No puedes consultar pagos de una reserva de otro usuario");
+        }
+
+        List<Pago> pagos = pagoRepository.findByReservaId(reservaId);
+
+        boolean contienePagosAjenos = pagos.stream()
+                .anyMatch(pago -> !Objects.equals(
+                        pago.getIdUsuario(),
+                        usuarioActual.getIdUsuario()
+                ));
+
+        if (contienePagosAjenos) {
+            throw accesoDenegado("La reserva contiene pagos asociados a otro usuario");
+        }
+
+        return pagos;
     }
 
     public List<Pago> findByEstadoPago(String estadoPago) {
@@ -196,13 +247,74 @@ public class PagoService {
             reservaClient.cambiarEstadoReserva(pago.getReservaId(), "CANCELADA");
         }
 
-        if (estadoPago.equals("PENDIENTE")) {
-            log.info("Pago pendiente. Cambiando reserva id: {} a PENDIENTE", pago.getReservaId());
-            reservaClient.cambiarEstadoReserva(pago.getReservaId(), "PENDIENTE");
-        }
-
         if (estadoPago.equals("ANULADO")) {
             log.warn("Pago anulado. No se cambia automáticamente el estado de la reserva id: {}", pago.getReservaId());
         }
+    }
+
+    private boolean prepararIdentidadPago(Pago pago, UsuarioDTO usuarioActual) {
+        if (esRol(usuarioActual, "ADMIN")) {
+            return true;
+        }
+
+        if (!esRol(usuarioActual, "USER")) {
+            throw accesoDenegado("Rol no autorizado para crear pagos");
+        }
+
+        if (!Objects.equals(usuarioActual.getIdUsuario(), pago.getIdUsuario())) {
+            throw accesoDenegado("No puedes crear un pago para otro usuario");
+        }
+
+        pago.setIdUsuario(usuarioActual.getIdUsuario());
+        return false;
+    }
+
+    private void validarPropiedadReserva(
+            Pago pago,
+            ReservaDTO reserva,
+            UsuarioDTO usuarioActual
+    ) {
+        if (!esRol(usuarioActual, "USER")) {
+            return;
+        }
+
+        if (reserva == null
+                || !Objects.equals(reserva.getIdUsuario(), usuarioActual.getIdUsuario())
+                || !Objects.equals(reserva.getIdUsuario(), pago.getIdUsuario())) {
+            throw accesoDenegado("No puedes pagar una reserva de otro usuario");
+        }
+    }
+
+    private void validarAccesoAPago(UsuarioDTO usuarioActual, Pago pago) {
+        if (esRol(usuarioActual, "ADMIN")) {
+            return;
+        }
+
+        if (!esRol(usuarioActual, "USER")
+                || !Objects.equals(usuarioActual.getIdUsuario(), pago.getIdUsuario())) {
+            throw accesoDenegado("No puedes consultar un pago de otro usuario");
+        }
+    }
+
+    private void validarReservaNoPagada(Long reservaId) {
+        boolean yaPagada = pagoRepository.findByReservaId(reservaId).stream()
+                .anyMatch(pago -> "APROBADO".equalsIgnoreCase(pago.getEstadoPago()));
+
+        if (yaPagada) {
+            throw new IllegalArgumentException("La reserva ya tiene un pago aprobado");
+        }
+    }
+
+    private boolean esRol(UsuarioDTO usuario, String rolEsperado) {
+        if (usuario == null || usuario.getRol() == null) {
+            return false;
+        }
+
+        String rol = usuario.getRol().toUpperCase();
+        return rolEsperado.equals(rol) || ("ROLE_" + rolEsperado).equals(rol);
+    }
+
+    private ResponseStatusException accesoDenegado(String mensaje) {
+        return new ResponseStatusException(HttpStatus.FORBIDDEN, mensaje);
     }
 }

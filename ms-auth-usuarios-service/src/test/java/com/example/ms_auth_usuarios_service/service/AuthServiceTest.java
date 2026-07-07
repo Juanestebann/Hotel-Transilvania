@@ -82,6 +82,29 @@ class AuthServiceTest {
     }
 
     @Test
+    void deberiaRetornarUsuarioAutenticadoPorNombre() {
+        Mockito.when(usuarioRepository.findByNombre("JuanAdmin")).thenReturn(Optional.of(crearUsuario()));
+
+        Usuario resultado = usuarioService.findAuthenticatedByNombre("JuanAdmin");
+
+        assertEquals(1L, resultado.getIdUsuario());
+        assertEquals("JuanAdmin", resultado.getNombre());
+        verify(usuarioRepository).findByNombre("JuanAdmin");
+    }
+
+    @Test
+    void deberiaLanzarErrorCuandoUsuarioAutenticadoNoExiste() {
+        Mockito.when(usuarioRepository.findByNombre("desconocido")).thenReturn(Optional.empty());
+
+        assertThrows(
+                NoSuchElementException.class,
+                () -> usuarioService.findAuthenticatedByNombre("desconocido")
+        );
+
+        verify(usuarioRepository).findByNombre("desconocido");
+    }
+
+    @Test
     void deberiaCrearUsuario() {
         Usuario usuario = crearUsuarioSinId();
 

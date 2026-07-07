@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 @WebMvcTest(ReservaController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -123,6 +124,43 @@ class ReservaControllerTest {
         reserva.setEstadoReserva("PENDIENTE");
         return reserva;
     }
+
+    @Test
+    void deberiaCambiarEstadoReserva() throws Exception{
+        //Given
+        Reserva reserva = crearReserva();
+        reserva.setEstadoReserva("CONFIRMADA");
+
+        when(service.cambiarEstado(1L,"CONFIRMADA"))
+                .thenReturn(reserva);
+
+        //When / Then
+        mockMvc.perform(put("/api/v1/reservas/1/estado")
+                .param("estadoReserva","CONFIRMADA")
+                .accept(MediaTypes.HAL_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.estadoReserva").value("CONFIRMADA"))
+                .andExpect(jsonPath("$._links.self.href").exists())
+                .andExpect(jsonPath("$._links.cambiar-estado.href").exists());
+
+        verify(service).cambiarEstado(1L,"CONFIRMADA");
+
+    }
+    /*
+    Este test valida el endpoint PUT /api/v1/reservas/{id}/estado.
+    En el Given preparo una reserva y cambio su estado a CONFIRMADA.
+    Luego configuro Mockito para que cuando el controller
+    llame a service.cambiarEstado(1L, "CONFIRMADA"), el service
+    simulado devuelva esa reserva. En el When ejecuto una petición
+    PUT con MockMvc, enviando el parámetro estadoReserva.
+    En el Then verifico que la respuesta HTTP sea 200 OK, que el JSON
+    tenga el id correcto, el estado actualizado y los links HATEOAS
+    esperados. Finalmente uso verify para confirmar que el controller
+    llamó correctamente al método del service.
+     */
+
+
 
     @TestConfiguration
     @EnableHypermediaSupport(type = EnableHypermediaSupport.HypermediaType.HAL)
