@@ -3,6 +3,7 @@ package com.example.ms_resena_service.client;
 import com.example.ms_resena_service.dto.ReservaDTO;
 import com.example.ms_resena_service.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -16,14 +17,16 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class ReservaClient {
 
-    private static final String RESERVAS_BASE_URL = "http://localhost:8086/api/v1/reservas";
-
     private final WebClient.Builder webClientBuilder;
     private final TokenProvider tokenProvider;
 
+    @Value("${reservas.service.url}")
+    private String reservasServiceUrl;
+
     public ReservaDTO obtenerReservaPorId(Long idReserva) {
-        return webClientBuilder
-                .baseUrl(RESERVAS_BASE_URL)
+        return RemoteCallSupport.block(webClientBuilder
+                .clone()
+                .baseUrl(reservasServiceUrl)
                 .build()
                 .get()
                 .uri("/{id}", idReserva)
@@ -43,17 +46,6 @@ public class ReservaClient {
                                 "Reserva-service no está disponible"
                         ))
                 )
-                .bodyToMono(ReservaDTO.class)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(
-                        HttpStatus.SERVICE_UNAVAILABLE,
-                        "Reserva-service devolvió una respuesta vacía"
-                )))
-                .onErrorMap(WebClientRequestException.class, exception ->
-                        new ResponseStatusException(
-                                HttpStatus.SERVICE_UNAVAILABLE,
-                                "No fue posible comunicarse con reserva-service",
-                                exception
-                        ))
-                .block();
+                .bodyToMono(ReservaDTO.class), "reserva-service");
     }
 }

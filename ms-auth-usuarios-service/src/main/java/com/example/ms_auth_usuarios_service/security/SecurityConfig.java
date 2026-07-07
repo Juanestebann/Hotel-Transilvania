@@ -103,9 +103,9 @@ public class SecurityConfig {
 
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED))
                         .accessDeniedHandler((request, response, exception) ->
-                                response.sendError(HttpServletResponse.SC_FORBIDDEN))
+                                response.setStatus(HttpServletResponse.SC_FORBIDDEN))
                 )
 
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

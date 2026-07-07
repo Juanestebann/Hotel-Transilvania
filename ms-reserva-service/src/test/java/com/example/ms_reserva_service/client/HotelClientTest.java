@@ -36,10 +36,11 @@ class HotelClientTest {
                     .build());
         });
 
-        HotelDTO resultado = new HotelClient(builder, tokenProvider()).obtenerHotelPorId(7L);
+        HotelDTO resultado = client(builder).obtenerHotelPorId(7L);
 
         assertEquals(7L, resultado.getId());
         assertEquals("/api/v1/hoteles/7", solicitud.get().url().getPath());
+        assertEquals("configured.test", solicitud.get().url().getHost());
         assertEquals("Bearer token-test",
                 solicitud.get().headers().getFirst(HttpHeaders.AUTHORIZATION));
     }
@@ -72,7 +73,7 @@ class HotelClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new HotelClient(builder, tokenProvider()).obtenerHotelPorId(1L)
+                () -> client(builder).obtenerHotelPorId(1L)
         );
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
@@ -92,7 +93,7 @@ class HotelClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new HotelClient(builder, tokenProvider()).obtenerHotelPorId(1L)
+                () -> client(builder).obtenerHotelPorId(1L)
         );
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
@@ -105,7 +106,7 @@ class HotelClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new HotelClient(builder, tokenProvider()).obtenerHotelPorId(1L)
+                () -> client(builder).obtenerHotelPorId(1L)
         );
 
         assertEquals(estadoEsperado, exception.getStatusCode());
@@ -115,5 +116,10 @@ class HotelClientTest {
         TokenProvider tokenProvider = mock(TokenProvider.class);
         when(tokenProvider.getAuthorizationHeader()).thenReturn("Bearer token-test");
         return tokenProvider;
+    }
+
+    private HotelClient client(WebClient.Builder builder) {
+        return ClientTestSupport.configured(new HotelClient(builder, tokenProvider()),
+                "hotelesServiceUrl", "http://configured.test/api/v1/hoteles");
     }
 }

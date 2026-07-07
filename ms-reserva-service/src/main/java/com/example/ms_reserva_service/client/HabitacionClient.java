@@ -3,6 +3,7 @@ package com.example.ms_reserva_service.client;
 import com.example.ms_reserva_service.dto.HabitacionDTO;
 import com.example.ms_reserva_service.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -19,13 +20,17 @@ public class HabitacionClient {
     private final WebClient.Builder webClientBuilder;
     private final TokenProvider tokenProvider;
 
+    @Value("${habitaciones.service.url}")
+    private String habitacionesServiceUrl;
+
     public HabitacionDTO obtenerHabitacionPorId(Long id) {
 
         WebClient webClient = webClientBuilder
-                .baseUrl("http://localhost:8084/api/v1/habitaciones")
+                .clone()
+                .baseUrl(habitacionesServiceUrl)
                 .build();
 
-        return webClient.get()
+        return RemoteCallSupport.block(webClient.get()
                 .uri("/{id}", id)
                 .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
                 .retrieve()
@@ -43,17 +48,6 @@ public class HabitacionClient {
                                 "Error en ms-habitacion-service"
                         ))
                 )
-                .bodyToMono(HabitacionDTO.class)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(
-                        HttpStatus.SERVICE_UNAVAILABLE,
-                        "Habitación-service devolvió una respuesta vacía"
-                )))
-                .onErrorMap(WebClientRequestException.class, exception ->
-                        new ResponseStatusException(
-                                HttpStatus.SERVICE_UNAVAILABLE,
-                                "No fue posible comunicarse con habitación-service",
-                                exception
-                        ))
-                .block();
+                .bodyToMono(HabitacionDTO.class), "habitacion-service");
     }
 }

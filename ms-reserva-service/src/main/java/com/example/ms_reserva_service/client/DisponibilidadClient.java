@@ -2,8 +2,8 @@ package com.example.ms_reserva_service.client;
 
 import com.example.ms_reserva_service.dto.DisponibilidadDTO;
 import com.example.ms_reserva_service.security.ServiceTokenProvider;
-import com.example.ms_reserva_service.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -20,12 +20,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DisponibilidadClient {
 
-    private static final String DISPONIBILIDADES_BASE_URL =
-            "http://localhost:8085/api/v1/disponibilidades";
-
     private final WebClient.Builder webClientBuilder;
-    private final TokenProvider tokenProvider;
     private final ServiceTokenProvider serviceTokenProvider;
+
+    @Value("${disponibilidades.service.url}")
+    private String disponibilidadesServiceUrl;
 
     public DisponibilidadDTO obtenerDisponibilidadPorHabitacionYFecha(
             Long idHabitacion,
@@ -33,12 +32,13 @@ public class DisponibilidadClient {
     ) {
 
         WebClient webClient = webClientBuilder
-                .baseUrl(DISPONIBILIDADES_BASE_URL)
+                .clone()
+                .baseUrl(disponibilidadesServiceUrl)
                 .build();
 
-        return webClient.get()
-                .uri("/habitacion/{idHabitacion}/fecha/{fecha}", idHabitacion, fecha)
-                .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
+        return RemoteCallSupport.block(webClient.get()
+                .uri("/internal/habitacion/{idHabitacion}/fecha/{fecha}", idHabitacion, fecha)
+                .header(HttpHeaders.AUTHORIZATION, serviceTokenProvider.getAuthorizationHeader())
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response -> {
                     HttpStatusCode status = response.statusCode();
@@ -55,18 +55,7 @@ public class DisponibilidadClient {
                                 "Disponibilidad-service no está disponible"
                         ))
                 )
-                .bodyToMono(DisponibilidadDTO.class)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(
-                        HttpStatus.SERVICE_UNAVAILABLE,
-                        "Disponibilidad-service devolvió una respuesta vacía"
-                )))
-                .onErrorMap(WebClientRequestException.class, exception ->
-                        new ResponseStatusException(
-                                HttpStatus.SERVICE_UNAVAILABLE,
-                                "No fue posible comunicarse con disponibilidad-service",
-                                exception
-                        ))
-                .block();
+                .bodyToMono(DisponibilidadDTO.class), "disponibilidad-service");
     }
 
     public DisponibilidadDTO actualizarDisponibilidad(
@@ -75,10 +64,11 @@ public class DisponibilidadClient {
     ) {
 
         WebClient webClient = webClientBuilder
-                .baseUrl(DISPONIBILIDADES_BASE_URL)
+                .clone()
+                .baseUrl(disponibilidadesServiceUrl)
                 .build();
 
-        return webClient.put()
+        return RemoteCallSupport.block(webClient.put()
                 .uri("/internal/{id}", idDisponibilidad)
                 .header(HttpHeaders.AUTHORIZATION, serviceTokenProvider.getAuthorizationHeader())
                 .bodyValue(Map.of("estado", disponibilidad.getEstado()))
@@ -96,17 +86,6 @@ public class DisponibilidadClient {
                                 "Disponibilidad-service no está disponible"
                         ))
                 )
-                .bodyToMono(DisponibilidadDTO.class)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(
-                        HttpStatus.SERVICE_UNAVAILABLE,
-                        "Disponibilidad-service devolvió una respuesta vacía"
-                )))
-                .onErrorMap(WebClientRequestException.class, exception ->
-                        new ResponseStatusException(
-                                HttpStatus.SERVICE_UNAVAILABLE,
-                                "No fue posible comunicarse con disponibilidad-service",
-                                exception
-                        ))
-                .block();
+                .bodyToMono(DisponibilidadDTO.class), "disponibilidad-service");
     }
 }

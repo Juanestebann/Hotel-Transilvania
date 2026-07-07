@@ -3,6 +3,7 @@ package com.example.ms_reserva_service.client;
 import com.example.ms_reserva_service.dto.UsuarioDTO;
 import com.example.ms_reserva_service.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -16,10 +17,11 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class UsuarioClient {
 
-    private static final String USUARIOS_BASE_URL = "http://localhost:8081/api/v1/usuarios";
-
     private final WebClient.Builder webClientBuilder;
     private final TokenProvider tokenProvider;
+
+    @Value("${usuarios.service.url}")
+    private String usuariosServiceUrl;
 
     public UsuarioDTO obtenerUsuarioActual() {
         return ejecutarConsulta("/me", "Usuario autenticado no encontrado");
@@ -31,10 +33,11 @@ public class UsuarioClient {
 
     private UsuarioDTO ejecutarConsulta(String uri, String mensajeNoEncontrado) {
         WebClient webClient = webClientBuilder
-                .baseUrl(USUARIOS_BASE_URL)
+                .clone()
+                .baseUrl(usuariosServiceUrl)
                 .build();
 
-        return webClient.get()
+        return RemoteCallSupport.block(webClient.get()
                 .uri(uri)
                 .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
                 .retrieve()
@@ -52,17 +55,6 @@ public class UsuarioClient {
                                 "Auth-service no está disponible"
                         ))
                 )
-                .bodyToMono(UsuarioDTO.class)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(
-                        HttpStatus.SERVICE_UNAVAILABLE,
-                        "Auth-service devolvió una respuesta vacía"
-                )))
-                .onErrorMap(WebClientRequestException.class, exception ->
-                        new ResponseStatusException(
-                                HttpStatus.SERVICE_UNAVAILABLE,
-                                "No fue posible comunicarse con auth-service",
-                                exception
-                        ))
-                .block();
+                .bodyToMono(UsuarioDTO.class), "auth-service");
     }
 }

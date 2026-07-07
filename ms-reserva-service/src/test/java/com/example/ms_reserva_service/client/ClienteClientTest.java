@@ -38,11 +38,12 @@ class ClienteClientTest {
         });
 
         ClienteValidacionDTO resultado =
-                new ClienteClient(builder, tokenProvider()).obtenerClientePorId(7L);
+                client(builder).obtenerClientePorId(7L);
 
         assertEquals(7L, resultado.idCliente());
         assertTrue(resultado.existe());
         assertEquals("/api/v1/clientes/7/validacion", solicitud.get().url().getPath());
+        assertEquals("configured.test", solicitud.get().url().getHost());
         assertEquals("Bearer token-test",
                 solicitud.get().headers().getFirst(HttpHeaders.AUTHORIZATION));
     }
@@ -75,7 +76,7 @@ class ClienteClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new ClienteClient(builder, tokenProvider()).obtenerClientePorId(1L)
+                () -> client(builder).obtenerClientePorId(1L)
         );
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
@@ -95,7 +96,7 @@ class ClienteClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new ClienteClient(builder, tokenProvider()).obtenerClientePorId(1L)
+                () -> client(builder).obtenerClientePorId(1L)
         );
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
@@ -108,7 +109,7 @@ class ClienteClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new ClienteClient(builder, tokenProvider()).obtenerClientePorId(1L)
+                () -> client(builder).obtenerClientePorId(1L)
         );
 
         assertEquals(estadoEsperado, exception.getStatusCode());
@@ -118,5 +119,10 @@ class ClienteClientTest {
         TokenProvider tokenProvider = mock(TokenProvider.class);
         when(tokenProvider.getAuthorizationHeader()).thenReturn("Bearer token-test");
         return tokenProvider;
+    }
+
+    private ClienteClient client(WebClient.Builder builder) {
+        return ClientTestSupport.configured(new ClienteClient(builder, tokenProvider()),
+                "clientesServiceUrl", "http://configured.test/api/v1/clientes");
     }
 }

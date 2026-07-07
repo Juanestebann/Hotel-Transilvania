@@ -3,6 +3,7 @@ package com.example.ms_reserva_service.client;
 import com.example.ms_reserva_service.dto.HotelDTO;
 import com.example.ms_reserva_service.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -19,10 +20,14 @@ public class HotelClient {
     private final WebClient.Builder webClientBuilder;
     private final TokenProvider tokenProvider;
 
+    @Value("${hoteles.service.url}")
+    private String hotelesServiceUrl;
+
     public HotelDTO obtenerHotelPorId(Long idHotel) {
 
-        return webClientBuilder
-                .baseUrl("http://localhost:8083/api/v1/hoteles")
+        return RemoteCallSupport.block(webClientBuilder
+                .clone()
+                .baseUrl(hotelesServiceUrl)
                 .build()
                 .get()
                 .uri("/{id}", idHotel)
@@ -42,17 +47,6 @@ public class HotelClient {
                                 "Error al comunicarse con ms-hotel-service"
                         ))
                 )
-                .bodyToMono(HotelDTO.class)
-                .switchIfEmpty(Mono.error(new ResponseStatusException(
-                        HttpStatus.SERVICE_UNAVAILABLE,
-                        "Hotel-service devolvió una respuesta vacía"
-                )))
-                .onErrorMap(WebClientRequestException.class, exception ->
-                        new ResponseStatusException(
-                                HttpStatus.SERVICE_UNAVAILABLE,
-                                "No fue posible comunicarse con hotel-service",
-                                exception
-                        ))
-                .block();
+                .bodyToMono(HotelDTO.class), "hotel-service");
     }
 }

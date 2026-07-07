@@ -53,6 +53,17 @@ public class DisponibilidadController {
         return ResponseEntity.ok(disponibilidad);
     }
 
+    @PreAuthorize("hasRole('SERVICE') and authentication.name == 'ms-reserva-service'")
+    @GetMapping("/internal/habitacion/{idHabitacion}/fecha/{fecha}")
+    public ResponseEntity<Disponibilidad> findByHabitacionAndFechaInterno(
+            @PathVariable Long idHabitacion,
+            @PathVariable LocalDate fecha) {
+
+        return ResponseEntity.ok(
+                disponibilidadService.findByIdHabitacionAndFecha(idHabitacion, fecha)
+        );
+    }
+
     //http://localhost:8085/api/v1/disponibilidades
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping

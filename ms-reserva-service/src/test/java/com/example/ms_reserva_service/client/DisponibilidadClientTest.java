@@ -2,7 +2,6 @@ package com.example.ms_reserva_service.client;
 
 import com.example.ms_reserva_service.dto.DisponibilidadDTO;
 import com.example.ms_reserva_service.security.ServiceTokenProvider;
-import com.example.ms_reserva_service.security.TokenProvider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -36,16 +35,17 @@ class DisponibilidadClientTest {
     private static final String SECRET = "mi_clave_super_secreta_para_jwt_123456";
 
     @Test
-    void lecturaUsaTokenDelUsuario() {
+    void lecturaUsaTokenServiceYEndpointInterno() {
         AtomicReference<ClientRequest> solicitud = new AtomicReference<>();
         WebClient.Builder builder = respuestaExitosa(solicitud);
 
-        new DisponibilidadClient(builder, tokenProvider(), serviceTokenProviderMock())
+        client(builder)
                 .obtenerDisponibilidadPorHabitacionYFecha(1L, LocalDate.of(2026, 6, 20));
 
-        assertEquals("/api/v1/disponibilidades/habitacion/1/fecha/2026-06-20",
+        assertEquals("/api/v1/disponibilidades/internal/habitacion/1/fecha/2026-06-20",
                 solicitud.get().url().getPath());
-        assertEquals("Bearer token-user",
+        assertEquals("configured.test", solicitud.get().url().getHost());
+        assertEquals("Bearer token-service",
                 solicitud.get().headers().getFirst(HttpHeaders.AUTHORIZATION));
     }
 
@@ -54,11 +54,12 @@ class DisponibilidadClientTest {
         AtomicReference<ClientRequest> solicitud = new AtomicReference<>();
         WebClient.Builder builder = respuestaExitosa(solicitud);
 
-        new DisponibilidadClient(builder, tokenProvider(), serviceTokenProviderMock())
+        client(builder)
                 .actualizarDisponibilidad(7L, disponibilidad());
 
         assertEquals(HttpMethod.PUT, solicitud.get().method());
         assertEquals("/api/v1/disponibilidades/internal/7", solicitud.get().url().getPath());
+        assertEquals("configured.test", solicitud.get().url().getHost());
         assertEquals("Bearer token-service",
                 solicitud.get().headers().getFirst(HttpHeaders.AUTHORIZATION));
     }
@@ -91,7 +92,7 @@ class DisponibilidadClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new DisponibilidadClient(builder, tokenProvider(), serviceTokenProviderMock())
+                () -> client(builder)
                         .actualizarDisponibilidad(1L, disponibilidad())
         );
 
@@ -112,7 +113,7 @@ class DisponibilidadClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new DisponibilidadClient(builder, tokenProvider(), serviceTokenProviderMock())
+                () -> client(builder)
                         .actualizarDisponibilidad(1L, disponibilidad())
         );
 
@@ -143,7 +144,7 @@ class DisponibilidadClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new DisponibilidadClient(builder, tokenProvider(), serviceTokenProviderMock())
+                () -> client(builder)
                         .actualizarDisponibilidad(1L, disponibilidad())
         );
 
@@ -160,6 +161,14 @@ class DisponibilidadClientTest {
         });
     }
 
+    private DisponibilidadClient client(WebClient.Builder builder) {
+        return ClientTestSupport.configured(
+                new DisponibilidadClient(builder, serviceTokenProviderMock()),
+                "disponibilidadesServiceUrl",
+                "http://configured.test/api/v1/disponibilidades"
+        );
+    }
+
     private DisponibilidadDTO disponibilidad() {
         return new DisponibilidadDTO(
                 7L,
@@ -167,12 +176,6 @@ class DisponibilidadClientTest {
                 LocalDate.of(2026, 6, 20),
                 "OCUPADA"
         );
-    }
-
-    private TokenProvider tokenProvider() {
-        TokenProvider tokenProvider = mock(TokenProvider.class);
-        when(tokenProvider.getAuthorizationHeader()).thenReturn("Bearer token-user");
-        return tokenProvider;
     }
 
     private ServiceTokenProvider serviceTokenProviderMock() {

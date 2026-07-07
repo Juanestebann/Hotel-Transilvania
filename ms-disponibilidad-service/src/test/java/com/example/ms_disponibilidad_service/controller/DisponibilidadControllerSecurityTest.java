@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -125,6 +126,47 @@ class DisponibilidadControllerSecurityTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(estadoJson()))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void reservaServicePuedeConsultarDisponibilidadInternamente() throws Exception {
+        configurarToken("token-service", "ms-reserva-service", "SERVICE");
+        when(disponibilidadService.findByIdHabitacionAndFecha(
+                1L, LocalDate.of(2026, 6, 20)))
+                .thenReturn(crearDisponibilidad("DISPONIBLE"));
+
+        mockMvc.perform(get("/api/v1/disponibilidades/internal/habitacion/1/fecha/2026-06-20")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-service"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.estado").value("DISPONIBLE"));
+
+        verify(disponibilidadService).findByIdHabitacionAndFecha(
+                1L, LocalDate.of(2026, 6, 20));
+    }
+
+    @Test
+    void otroServiceNoPuedeConsultarDisponibilidadInternamente() throws Exception {
+        configurarToken("token-other", "ms-pago-service", "SERVICE");
+
+        mockMvc.perform(get("/api/v1/disponibilidades/internal/habitacion/1/fecha/2026-06-20")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-other"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void userNoPuedeConsultarDisponibilidadInternamente() throws Exception {
+        configurarToken("token-user", "mavis", "USER");
+
+        mockMvc.perform(get("/api/v1/disponibilidades/internal/habitacion/1/fecha/2026-06-20")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-user"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void lecturaInternaSinTokenRecibeUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/disponibilidades/internal/habitacion/1/fecha/2026-06-20"))
+                .andExpect(status().isUnauthorized());
     }
 
     private void configurarToken(String token, String nombre, String rol) {

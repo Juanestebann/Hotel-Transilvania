@@ -3,6 +3,7 @@ package com.example.ms_servicioAdicional_service.client;
 import com.example.ms_servicioAdicional_service.dto.ReservaDTO;
 import com.example.ms_servicioAdicional_service.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -18,24 +19,28 @@ public class ReservaClient {
     private final WebClient.Builder webClientBuilder;
     private final TokenProvider tokenProvider;
 
+    @Value("${reservas.service.url}")
+    private String reservasServiceUrl;
+
     public ReservaDTO obtenerReservaPorId(Long id) {
 
         WebClient webClient = webClientBuilder
-                .baseUrl("http://localhost:8086/api/v1/reservas")
+                .clone()
+                .baseUrl(reservasServiceUrl)
                 .build();
 
-        return webClient.get()
+        return RemoteCallSupport.block(webClient.get()
                 .uri("/{id}", id)
                 .header(HttpHeaders.AUTHORIZATION, tokenProvider.getAuthorizationHeader())
                 .retrieve()
 
                 // Error 404
-                .onStatus(HttpStatusCode::is4xxClientError, response ->
-                        Mono.error(new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Reserva no encontrada con id: " + id
-                        ))
-                )
+                .onStatus(HttpStatusCode::is4xxClientError, response -> {
+                    HttpStatusCode status = response.statusCode();
+                    return Mono.error(new ResponseStatusException(status,
+                            status.value() == 404 ? "Reserva no encontrada con id: " + id
+                                    : "Reserva-service rechazo la solicitud con estado " + status.value()));
+                })
 
                 // Error 500
                 .onStatus(HttpStatusCode::is5xxServerError, response ->
@@ -45,7 +50,6 @@ public class ReservaClient {
                         ))
                 )
 
-                .bodyToMono(ReservaDTO.class)
-                .block();
+                .bodyToMono(ReservaDTO.class), "reserva-service");
     }
 }

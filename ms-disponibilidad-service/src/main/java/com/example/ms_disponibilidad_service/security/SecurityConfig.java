@@ -47,11 +47,11 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
 
+                        .requestMatchers("/api/v1/disponibilidades/internal/**")
+                        .hasRole("SERVICE")
+
                         .requestMatchers(HttpMethod.GET, "/api/v1/disponibilidades/**")
                         .hasAnyRole("USER", "ADMIN")
-
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/disponibilidades/internal/{id}")
-                        .hasRole("SERVICE")
 
                         .requestMatchers(HttpMethod.POST, "/api/v1/disponibilidades/**")
                         .hasRole("ADMIN")
@@ -68,9 +68,9 @@ public class SecurityConfig {
 
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED))
                         .accessDeniedHandler((request, response, exception) ->
-                                response.sendError(HttpServletResponse.SC_FORBIDDEN))
+                                response.setStatus(HttpServletResponse.SC_FORBIDDEN))
                 )
 
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

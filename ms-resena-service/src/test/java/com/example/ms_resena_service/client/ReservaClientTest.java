@@ -36,11 +36,12 @@ class ReservaClientTest {
                     .build());
         });
 
-        ReservaDTO resultado = new ReservaClient(builder, tokenProvider()).obtenerReservaPorId(1L);
+        ReservaDTO resultado = client(builder).obtenerReservaPorId(1L);
 
         assertEquals(7L, resultado.getIdUsuario());
         assertEquals(2L, resultado.getIdCliente());
         assertEquals("/api/v1/reservas/1", solicitud.get().url().getPath());
+        assertEquals("configured.test", solicitud.get().url().getHost());
         assertEquals("Bearer token-user",
                 solicitud.get().headers().getFirst(HttpHeaders.AUTHORIZATION));
     }
@@ -73,7 +74,7 @@ class ReservaClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new ReservaClient(builder, tokenProvider()).obtenerReservaPorId(1L)
+                () -> client(builder).obtenerReservaPorId(1L)
         );
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
@@ -93,7 +94,7 @@ class ReservaClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new ReservaClient(builder, tokenProvider()).obtenerReservaPorId(1L)
+                () -> client(builder).obtenerReservaPorId(1L)
         );
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
@@ -106,7 +107,7 @@ class ReservaClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new ReservaClient(builder, tokenProvider()).obtenerReservaPorId(1L)
+                () -> client(builder).obtenerReservaPorId(1L)
         );
 
         assertEquals(estadoEsperado, exception.getStatusCode());
@@ -116,5 +117,10 @@ class ReservaClientTest {
         TokenProvider tokenProvider = mock(TokenProvider.class);
         when(tokenProvider.getAuthorizationHeader()).thenReturn("Bearer token-user");
         return tokenProvider;
+    }
+
+    private ReservaClient client(WebClient.Builder builder) {
+        return ClientTestSupport.configured(new ReservaClient(builder, tokenProvider()),
+                "reservasServiceUrl", "http://configured.test/api/v1/reservas");
     }
 }

@@ -102,6 +102,16 @@ class ClienteControllerSecurityTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void tokenInvalidoRecibeUnauthorized() throws Exception {
+        when(jwtService.extractNombre("token-invalido"))
+                .thenThrow(new IllegalArgumentException("Token inválido"));
+
+        mockMvc.perform(get("/api/v1/clientes/1")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-invalido"))
+                .andExpect(status().isUnauthorized());
+    }
+
     private void configurarToken(String token, String nombre, String rol) {
         when(jwtService.extractNombre(token)).thenReturn(nombre);
         when(jwtService.extractRol(token)).thenReturn(rol);

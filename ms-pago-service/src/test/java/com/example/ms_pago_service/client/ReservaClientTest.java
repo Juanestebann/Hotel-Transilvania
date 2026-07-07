@@ -39,10 +39,11 @@ class ReservaClientTest {
         AtomicReference<ClientRequest> solicitud = new AtomicReference<>();
         WebClient.Builder builder = respuestaExitosa(solicitud);
 
-        new ReservaClient(builder, tokenProvider(), serviceTokenProviderMock())
+        client(builder)
                 .obtenerReservaPorId(1L);
 
         assertEquals("/api/v1/reservas/1", solicitud.get().url().getPath());
+        assertEquals("configured.test", solicitud.get().url().getHost());
         assertEquals("Bearer token-user",
                 solicitud.get().headers().getFirst(HttpHeaders.AUTHORIZATION));
     }
@@ -52,11 +53,12 @@ class ReservaClientTest {
         AtomicReference<ClientRequest> solicitud = new AtomicReference<>();
         WebClient.Builder builder = respuestaExitosa(solicitud);
 
-        new ReservaClient(builder, tokenProvider(), serviceTokenProviderMock())
+        client(builder)
                 .cambiarEstadoReserva(1L, "CONFIRMADA");
 
         assertEquals(HttpMethod.PUT, solicitud.get().method());
         assertEquals("/api/v1/reservas/internal/1/estado", solicitud.get().url().getPath());
+        assertEquals("configured.test", solicitud.get().url().getHost());
         assertEquals("CONFIRMADA", solicitud.get().url().getQuery().split("=")[1]);
         assertEquals("Bearer token-service",
                 solicitud.get().headers().getFirst(HttpHeaders.AUTHORIZATION));
@@ -90,7 +92,7 @@ class ReservaClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new ReservaClient(builder, tokenProvider(), serviceTokenProviderMock())
+                () -> client(builder)
                         .cambiarEstadoReserva(1L, "CONFIRMADA")
         );
 
@@ -111,7 +113,7 @@ class ReservaClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new ReservaClient(builder, tokenProvider(), serviceTokenProviderMock())
+                () -> client(builder)
                         .cambiarEstadoReserva(1L, "CONFIRMADA")
         );
 
@@ -142,7 +144,7 @@ class ReservaClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new ReservaClient(builder, tokenProvider(), serviceTokenProviderMock())
+                () -> client(builder)
                         .cambiarEstadoReserva(1L, "CONFIRMADA")
         );
 
@@ -157,6 +159,14 @@ class ReservaClientTest {
                     .body("{\"id\":1,\"idUsuario\":7,\"estadoReserva\":\"CONFIRMADA\"}")
                     .build());
         });
+    }
+
+    private ReservaClient client(WebClient.Builder builder) {
+        return ClientTestSupport.configured(
+                new ReservaClient(builder, tokenProvider(), serviceTokenProviderMock()),
+                "reservasServiceUrl",
+                "http://configured.test/api/v1/reservas"
+        );
     }
 
     private TokenProvider tokenProvider() {

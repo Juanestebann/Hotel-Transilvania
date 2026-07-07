@@ -37,10 +37,11 @@ class HabitacionClientTest {
         });
 
         HabitacionDTO resultado =
-                new HabitacionClient(builder, tokenProvider()).obtenerHabitacionPorId(7L);
+                client(builder).obtenerHabitacionPorId(7L);
 
         assertEquals(7L, resultado.getIdHabitacion());
         assertEquals("/api/v1/habitaciones/7", solicitud.get().url().getPath());
+        assertEquals("configured.test", solicitud.get().url().getHost());
         assertEquals("Bearer token-test",
                 solicitud.get().headers().getFirst(HttpHeaders.AUTHORIZATION));
     }
@@ -73,7 +74,7 @@ class HabitacionClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new HabitacionClient(builder, tokenProvider()).obtenerHabitacionPorId(1L)
+                () -> client(builder).obtenerHabitacionPorId(1L)
         );
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
@@ -93,7 +94,7 @@ class HabitacionClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new HabitacionClient(builder, tokenProvider()).obtenerHabitacionPorId(1L)
+                () -> client(builder).obtenerHabitacionPorId(1L)
         );
 
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
@@ -106,7 +107,7 @@ class HabitacionClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new HabitacionClient(builder, tokenProvider()).obtenerHabitacionPorId(1L)
+                () -> client(builder).obtenerHabitacionPorId(1L)
         );
 
         assertEquals(estadoEsperado, exception.getStatusCode());
@@ -116,5 +117,10 @@ class HabitacionClientTest {
         TokenProvider tokenProvider = mock(TokenProvider.class);
         when(tokenProvider.getAuthorizationHeader()).thenReturn("Bearer token-test");
         return tokenProvider;
+    }
+
+    private HabitacionClient client(WebClient.Builder builder) {
+        return ClientTestSupport.configured(new HabitacionClient(builder, tokenProvider()),
+                "habitacionesServiceUrl", "http://configured.test/api/v1/habitaciones");
     }
 }

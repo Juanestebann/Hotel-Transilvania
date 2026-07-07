@@ -33,12 +33,13 @@ class UsuarioClientTest {
                     .build());
         });
 
-        UsuarioDTO resultado = new UsuarioClient(builder, tokenProvider).obtenerUsuarioActual();
+        UsuarioDTO resultado = client(builder, tokenProvider).obtenerUsuarioActual();
 
         assertEquals(7L, resultado.getIdUsuario());
         assertEquals("mavis", resultado.getNombre());
         assertEquals("USER", resultado.getRol());
         assertEquals("/api/v1/usuarios/me", solicitud.get().url().getPath());
+        assertEquals("configured.test", solicitud.get().url().getHost());
         assertEquals("Bearer token-test",
                 solicitud.get().headers().getFirst(HttpHeaders.AUTHORIZATION));
     }
@@ -70,7 +71,7 @@ class UsuarioClientTest {
 
         ResponseStatusException exception = assertThrows(
                 ResponseStatusException.class,
-                () -> new UsuarioClient(builder, tokenProvider()).obtenerUsuarioActual()
+                () -> client(builder, tokenProvider()).obtenerUsuarioActual()
         );
 
         assertEquals(estadoEsperado, exception.getStatusCode());
@@ -80,5 +81,10 @@ class UsuarioClientTest {
         TokenProvider tokenProvider = mock(TokenProvider.class);
         when(tokenProvider.getAuthorizationHeader()).thenReturn("Bearer token-test");
         return tokenProvider;
+    }
+
+    private UsuarioClient client(WebClient.Builder builder, TokenProvider tokenProvider) {
+        return ClientTestSupport.configured(new UsuarioClient(builder, tokenProvider),
+                "usuariosServiceUrl", "http://configured.test/api/v1/usuarios");
     }
 }
