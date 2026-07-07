@@ -12,3 +12,9 @@ logs/
 
 # VS Code
 .vscode/
+
+.audit_workspace/
+output/
+tmp/
+*.zip
+scripts/convert_guia_md_to_pdf.py
