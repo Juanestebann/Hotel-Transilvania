@@ -1,6 +1,6 @@
-package com.example.ms_resena_service.client;
+package com.example.ms_servicioAdicional_service.client;
 
-import com.example.ms_resena_service.security.TokenProvider;
+import com.example.ms_servicioAdicional_service.security.TokenProvider;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
