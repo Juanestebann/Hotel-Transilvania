@@ -17,6 +17,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -92,6 +93,46 @@ class DisponibilidadServiceTest {
                 IllegalArgumentException.class,
                 () -> service.actualizarEstadoInterno(1L, "MANTENIMIENTO")
         );
+    }
+
+    @Test
+    void flujoInternoLiberaSoloDisponibilidadOcupada() {
+        Disponibilidad disponibilidad = crearDisponibilidad();
+        disponibilidad.setEstado("OCUPADA");
+        Mockito.when(repository.findById(1L)).thenReturn(Optional.of(disponibilidad));
+        Mockito.when(repository.save(disponibilidad)).thenReturn(disponibilidad);
+
+        Disponibilidad resultado = service.actualizarEstadoInterno(1L, "DISPONIBLE");
+
+        assertEquals("DISPONIBLE", resultado.getEstado());
+        verify(repository).save(disponibilidad);
+    }
+
+    @Test
+    void flujoInternoRechazaTransicionDesdeMantenimiento() {
+        Disponibilidad disponibilidad = crearDisponibilidad();
+        disponibilidad.setEstado("MANTENIMIENTO");
+        Mockito.when(repository.findById(1L)).thenReturn(Optional.of(disponibilidad));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.actualizarEstadoInterno(1L, "OCUPADA")
+        );
+
+        assertTrue(exception.getMessage().contains("MANTENIMIENTO -> OCUPADA"));
+        verify(repository, never()).save(disponibilidad);
+    }
+
+    @Test
+    void repetirMismoEstadoInternoEsIdempotente() {
+        Disponibilidad disponibilidad = crearDisponibilidad();
+        disponibilidad.setEstado("OCUPADA");
+        Mockito.when(repository.findById(1L)).thenReturn(Optional.of(disponibilidad));
+
+        Disponibilidad resultado = service.actualizarEstadoInterno(1L, "OCUPADA");
+
+        assertEquals("OCUPADA", resultado.getEstado());
+        verify(repository, never()).save(disponibilidad);
     }
 
     private Disponibilidad crearDisponibilidad() {

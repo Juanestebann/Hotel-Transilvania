@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -109,9 +110,13 @@ class PagoServiceTest {
     @Test
     void deberiaCrearPagoAprobadoYCambiarReservaAConfirmada() {
         Pago pago = crearPago("APROBADO");
+        List<String> estadosGuardados = new ArrayList<>();
 
         prepararFlujoUserPropio();
-        Mockito.when(pagoRepository.save(pago)).thenReturn(pago);
+        Mockito.when(pagoRepository.save(pago)).thenAnswer(invocation -> {
+            estadosGuardados.add(pago.getEstadoPago());
+            return pago;
+        });
 
         Pago resultado = pagoService.save(pago);
 
@@ -119,7 +124,8 @@ class PagoServiceTest {
         verify(reservaClient).obtenerReservaPorId(1L);
         verify(usuarioClient).obtenerUsuarioActual();
         Mockito.verify(usuarioClient, Mockito.never()).obtenerUsuarioPorId(Mockito.anyLong());
-        verify(pagoRepository).save(pago);
+        assertEquals(List.of("PROCESANDO", "APROBADO"), estadosGuardados);
+        verify(pagoRepository, Mockito.times(2)).save(pago);
         verify(reservaClient).cambiarEstadoReserva(1L, "CONFIRMADA");
     }
 
@@ -190,7 +196,7 @@ class PagoServiceTest {
         verify(pagoRepository).findById(1L);
         verify(reservaClient).obtenerReservaPorId(1L);
         verify(usuarioClient).obtenerUsuarioPorId(1L);
-        verify(pagoRepository).save(existente);
+        verify(pagoRepository, Mockito.times(2)).save(existente);
         verify(reservaClient).cambiarEstadoReserva(1L, "CONFIRMADA");
     }
 
@@ -376,6 +382,87 @@ class PagoServiceTest {
         assertThrows(IllegalArgumentException.class, () -> pagoService.save(pago));
 
         Mockito.verify(pagoRepository, Mockito.never()).save(pago);
+    }
+
+    @Test
+    void reservaNotFoundDejaPagoRechazadoYNoAprobado() {
+        Pago pago = crearPago("APROBADO");
+        List<String> estadosGuardados = new ArrayList<>();
+        prepararFlujoUserPropio();
+        Mockito.when(pagoRepository.save(pago)).thenAnswer(invocation -> {
+            estadosGuardados.add(pago.getEstadoPago());
+            return pago;
+        });
+        Mockito.when(reservaClient.cambiarEstadoReserva(1L, "CONFIRMADA"))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> pagoService.save(pago)
+        );
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("RECHAZADO", pago.getEstadoPago());
+        assertEquals(List.of("PROCESANDO", "RECHAZADO"), estadosGuardados);
+        assertFalse(estadosGuardados.contains("APROBADO"));
+    }
+
+    @Test
+    void reservaServiceUnavailableDejaPagoPendienteRevision() {
+        Pago pago = crearPago("APROBADO");
+        prepararFlujoUserPropio();
+        Mockito.when(pagoRepository.save(pago)).thenReturn(pago);
+        Mockito.when(reservaClient.cambiarEstadoReserva(1L, "CONFIRMADA"))
+                .thenThrow(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> pagoService.save(pago)
+        );
+
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatusCode());
+        assertEquals("PENDIENTE_REVISION", pago.getEstadoPago());
+        verify(pagoRepository, Mockito.times(2)).save(pago);
+    }
+
+    @Test
+    void reservaGatewayTimeoutDejaPagoPendienteRevision() {
+        Pago pago = crearPago("APROBADO");
+        prepararFlujoUserPropio();
+        Mockito.when(pagoRepository.save(pago)).thenReturn(pago);
+        Mockito.when(reservaClient.cambiarEstadoReserva(1L, "CONFIRMADA"))
+                .thenThrow(new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT));
+
+        ResponseStatusException exception = assertThrows(
+                ResponseStatusException.class,
+                () -> pagoService.save(pago)
+        );
+
+        assertEquals(HttpStatus.GATEWAY_TIMEOUT, exception.getStatusCode());
+        assertEquals("PENDIENTE_REVISION", pago.getEstadoPago());
+        verify(pagoRepository, Mockito.times(2)).save(pago);
+    }
+
+    @Test
+    void updateNoPermiteSegundoPagoAprobadoParaLaMismaReserva() {
+        Pago existente = crearPago("PENDIENTE");
+        Pago actualizado = crearPago("APROBADO");
+        Pago otroAprobado = crearPago("APROBADO");
+        otroAprobado.setIdPago(2L);
+
+        Mockito.when(pagoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        Mockito.when(reservaClient.obtenerReservaPorId(1L)).thenReturn(crearReserva(1L));
+        Mockito.when(usuarioClient.obtenerUsuarioPorId(1L)).thenReturn(crearUsuario(1L, "USER"));
+        Mockito.when(pagoRepository.findByReservaId(1L)).thenReturn(List.of(otroAprobado));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> pagoService.update(1L, actualizado)
+        );
+
+        Mockito.verify(pagoRepository, Mockito.never()).save(existente);
+        Mockito.verify(reservaClient, Mockito.never())
+                .cambiarEstadoReserva(Mockito.anyLong(), Mockito.anyString());
     }
 
     private void prepararFlujoUserPropio() {

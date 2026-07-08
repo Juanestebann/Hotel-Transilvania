@@ -22,6 +22,11 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class PagoService {
 
+    private static final String APROBADO = "APROBADO";
+    private static final String PROCESANDO = "PROCESANDO";
+    private static final String PENDIENTE_REVISION = "PENDIENTE_REVISION";
+    private static final String RECHAZADO = "RECHAZADO";
+
     private final PagoRepository pagoRepository;
     private final ReservaClient reservaClient;
     private final UsuarioClient usuarioClient;
@@ -83,6 +88,10 @@ public class PagoService {
 
         validarReservaNoPagada(pago.getReservaId());
 
+        if (APROBADO.equals(pago.getEstadoPago())) {
+            return procesarAprobacion(pago);
+        }
+
         Pago pagoGuardado = pagoRepository.save(pago);
         actualizarEstadoReservaSegunPago(pagoGuardado);
 
@@ -120,8 +129,14 @@ public class PagoService {
         pago.setIdUsuario(pagoActualizado.getIdUsuario());
         pago.setMonto(pagoActualizado.getMonto());
         pago.setMetodoPago(pagoActualizado.getMetodoPago());
-        pago.setEstadoPago(pagoActualizado.getEstadoPago().toUpperCase());
+        String estadoSolicitado = pagoActualizado.getEstadoPago().toUpperCase();
+        pago.setEstadoPago(estadoSolicitado);
         pago.setFechaPago(pagoActualizado.getFechaPago());
+
+        if (APROBADO.equals(estadoSolicitado)) {
+            validarReservaNoPagada(pago.getReservaId(), pago.getIdPago());
+            return procesarAprobacion(pago);
+        }
 
         Pago pagoGuardado = pagoRepository.save(pago);
         actualizarEstadoReservaSegunPago(pagoGuardado);
@@ -252,6 +267,29 @@ public class PagoService {
         }
     }
 
+    private Pago procesarAprobacion(Pago pago) {
+        pago.setEstadoPago(PROCESANDO);
+        pagoRepository.save(pago);
+
+        try {
+            reservaClient.cambiarEstadoReserva(pago.getReservaId(), "CONFIRMADA");
+        } catch (ResponseStatusException exception) {
+            pago.setEstadoPago(esFalloAmbiguo(exception)
+                    ? PENDIENTE_REVISION
+                    : RECHAZADO);
+            pagoRepository.save(pago);
+            throw exception;
+        }
+
+        pago.setEstadoPago(APROBADO);
+        return pagoRepository.save(pago);
+    }
+
+    private boolean esFalloAmbiguo(ResponseStatusException exception) {
+        return exception.getStatusCode().value() == HttpStatus.SERVICE_UNAVAILABLE.value()
+                || exception.getStatusCode().value() == HttpStatus.GATEWAY_TIMEOUT.value();
+    }
+
     private boolean prepararIdentidadPago(Pago pago, UsuarioDTO usuarioActual) {
         if (esRol(usuarioActual, "ADMIN")) {
             return true;
@@ -297,7 +335,13 @@ public class PagoService {
     }
 
     private void validarReservaNoPagada(Long reservaId) {
+        validarReservaNoPagada(reservaId, null);
+    }
+
+    private void validarReservaNoPagada(Long reservaId, Long pagoIgnorado) {
         boolean yaPagada = pagoRepository.findByReservaId(reservaId).stream()
+                .filter(pago -> pagoIgnorado == null
+                        || !Objects.equals(pago.getIdPago(), pagoIgnorado))
                 .anyMatch(pago -> "APROBADO".equalsIgnoreCase(pago.getEstadoPago()));
 
         if (yaPagada) {

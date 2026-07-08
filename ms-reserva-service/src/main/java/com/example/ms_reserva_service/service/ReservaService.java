@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -98,16 +99,24 @@ public class ReservaService {
         reserva.setEstadoReserva(reserva.getEstadoReserva().toUpperCase());
         reserva.setFechaCreacion(LocalDateTime.now());
 
-        Reserva reservaGuardada = reservaRepository.save(reserva);
+        List<DisponibilidadDTO> disponibilidadesOcupadas = List.of();
+        if (debeOcuparDisponibilidad(reserva)) {
+            disponibilidadesOcupadas = marcarDisponibilidadComoOcupada(reserva);
+        }
+
+        Reserva reservaGuardada;
+        try {
+            reservaGuardada = reservaRepository.save(reserva);
+        } catch (RuntimeException exception) {
+            throw resolverFalloConCompensacion(
+                    disponibilidadesOcupadas,
+                    "DISPONIBLE",
+                    exception,
+                    "crear la reserva confirmada"
+            );
+        }
 
         log.info("Reserva creada correctamente con id: {}", reservaGuardada.getId());
-
-        if (debeOcuparDisponibilidad(reservaGuardada)) {
-            log.info("Reserva id: {} está CONFIRMADA. Marcando disponibilidad como OCUPADA",
-                    reservaGuardada.getId());
-
-            marcarDisponibilidadComoOcupada(reservaGuardada);
-        }
 
         return reservaGuardada;
     }
@@ -116,13 +125,30 @@ public class ReservaService {
         log.info("Actualizando reserva con id: {}", id);
 
         Reserva reservaExistente = findById(id);
+        String estadoAnterior = reservaExistente.getEstadoReserva().toUpperCase();
+        String nuevoEstado = reservaActualizada.getEstadoReserva().toUpperCase();
+        validarTransicionEstado(estadoAnterior, nuevoEstado);
 
+        List<DisponibilidadDTO> disponibilidadesLiberadas = List.of();
         if (debeOcuparDisponibilidad(reservaExistente)) {
             log.info("Liberando disponibilidad anterior para reserva id: {}", id);
-            liberarDisponibilidadReserva(reservaExistente);
+            disponibilidadesLiberadas = liberarDisponibilidadReserva(reservaExistente);
         }
 
-        validarReservaCompleta(reservaActualizada, true);
+        List<DisponibilidadDTO> disponibilidadesOcupadas = List.of();
+        try {
+            validarReservaCompleta(reservaActualizada, true);
+            if (debeOcuparDisponibilidad(reservaActualizada)) {
+                disponibilidadesOcupadas = marcarDisponibilidadComoOcupada(reservaActualizada);
+            }
+        } catch (RuntimeException exception) {
+            throw resolverFalloConCompensacion(
+                    disponibilidadesLiberadas,
+                    "OCUPADA",
+                    exception,
+                    "restaurar la reserva anterior"
+            );
+        }
 
         reservaExistente.setIdCliente(reservaActualizada.getIdCliente());
         reservaExistente.setIdUsuario(reservaActualizada.getIdUsuario());
@@ -133,16 +159,25 @@ public class ReservaService {
         reservaExistente.setCantidadPersonas(reservaActualizada.getCantidadPersonas());
         reservaExistente.setEstadoReserva(reservaActualizada.getEstadoReserva().toUpperCase());
 
-        Reserva reservaGuardada = reservaRepository.save(reservaExistente);
+        Reserva reservaGuardada;
+        try {
+            reservaGuardada = reservaRepository.save(reservaExistente);
+        } catch (RuntimeException exception) {
+            RuntimeException fallo = resolverFalloConCompensacion(
+                    disponibilidadesOcupadas,
+                    "DISPONIBLE",
+                    exception,
+                    "deshacer la nueva disponibilidad"
+            );
+            throw resolverFalloConCompensacion(
+                    disponibilidadesLiberadas,
+                    "OCUPADA",
+                    fallo,
+                    "restaurar la reserva anterior"
+            );
+        }
 
         log.info("Reserva actualizada correctamente con id: {}", id);
-
-        if (debeOcuparDisponibilidad(reservaGuardada)) {
-            log.info("Reserva id: {} está CONFIRMADA. Marcando nueva disponibilidad como OCUPADA",
-                    reservaGuardada.getId());
-
-            marcarDisponibilidadComoOcupada(reservaGuardada);
-        }
 
         return reservaGuardada;
     }
@@ -312,64 +347,96 @@ public class ReservaService {
         }
     }
 
-    private void marcarDisponibilidadComoOcupada(Reserva reserva) {
+    private List<DisponibilidadDTO> marcarDisponibilidadComoOcupada(Reserva reserva) {
         log.info("Marcando disponibilidad como OCUPADA para habitación id: {} entre {} y {}",
                 reserva.getIdHabitacion(),
                 reserva.getFechaInicio(),
                 reserva.getFechaFin());
 
         LocalDate fechaActual = reserva.getFechaInicio();
+        List<DisponibilidadDTO> disponibilidadesActualizadas = new ArrayList<>();
 
         while (fechaActual.isBefore(reserva.getFechaFin())) {
             log.info("Actualizando disponibilidad a OCUPADA. Habitación id: {}, fecha: {}",
                     reserva.getIdHabitacion(),
                     fechaActual);
 
-            DisponibilidadDTO disponibilidad =
-                    disponibilidadClient.obtenerDisponibilidadPorHabitacionYFecha(
-                            reserva.getIdHabitacion(),
-                            fechaActual
-                    );
+            DisponibilidadDTO disponibilidad = null;
+            try {
+                disponibilidad = disponibilidadClient.obtenerDisponibilidadPorHabitacionYFecha(
+                        reserva.getIdHabitacion(),
+                        fechaActual
+                );
 
-            disponibilidad.setEstado("OCUPADA");
+                disponibilidad.setEstado("OCUPADA");
 
-            disponibilidadClient.actualizarDisponibilidad(
-                    disponibilidad.getId(),
-                    disponibilidad
-            );
+                disponibilidadClient.actualizarDisponibilidad(
+                        disponibilidad.getId(),
+                        disponibilidad
+                );
+                disponibilidadesActualizadas.add(disponibilidad);
+            } catch (RuntimeException exception) {
+                if (disponibilidad != null && esFalloRemotoAmbiguo(exception)) {
+                    disponibilidadesActualizadas.add(disponibilidad);
+                }
+                throw resolverFalloConCompensacion(
+                        disponibilidadesActualizadas,
+                        "DISPONIBLE",
+                        exception,
+                        "ocupar las disponibilidades"
+                );
+            }
 
             fechaActual = fechaActual.plusDays(1);
         }
+
+        return disponibilidadesActualizadas;
     }
 
-    private void liberarDisponibilidadReserva(Reserva reserva) {
+    private List<DisponibilidadDTO> liberarDisponibilidadReserva(Reserva reserva) {
         log.info("Liberando disponibilidad para habitación id: {} entre {} y {}",
                 reserva.getIdHabitacion(),
                 reserva.getFechaInicio(),
                 reserva.getFechaFin());
 
         LocalDate fechaActual = reserva.getFechaInicio();
+        List<DisponibilidadDTO> disponibilidadesActualizadas = new ArrayList<>();
 
         while (fechaActual.isBefore(reserva.getFechaFin())) {
             log.info("Actualizando disponibilidad a DISPONIBLE. Habitación id: {}, fecha: {}",
                     reserva.getIdHabitacion(),
                     fechaActual);
 
-            DisponibilidadDTO disponibilidad =
-                    disponibilidadClient.obtenerDisponibilidadPorHabitacionYFecha(
-                            reserva.getIdHabitacion(),
-                            fechaActual
-                    );
+            DisponibilidadDTO disponibilidad = null;
+            try {
+                disponibilidad = disponibilidadClient.obtenerDisponibilidadPorHabitacionYFecha(
+                        reserva.getIdHabitacion(),
+                        fechaActual
+                );
 
-            disponibilidad.setEstado("DISPONIBLE");
+                disponibilidad.setEstado("DISPONIBLE");
 
-            disponibilidadClient.actualizarDisponibilidad(
-                    disponibilidad.getId(),
-                    disponibilidad
-            );
+                disponibilidadClient.actualizarDisponibilidad(
+                        disponibilidad.getId(),
+                        disponibilidad
+                );
+                disponibilidadesActualizadas.add(disponibilidad);
+            } catch (RuntimeException exception) {
+                if (disponibilidad != null && esFalloRemotoAmbiguo(exception)) {
+                    disponibilidadesActualizadas.add(disponibilidad);
+                }
+                throw resolverFalloConCompensacion(
+                        disponibilidadesActualizadas,
+                        "OCUPADA",
+                        exception,
+                        "liberar las disponibilidades"
+                );
+            }
 
             fechaActual = fechaActual.plusDays(1);
         }
+
+        return disponibilidadesActualizadas;
     }
 
     public Reserva cambiarEstado(Long id, String estadoReserva) {
@@ -404,35 +471,147 @@ public class ReservaService {
 
     private Reserva aplicarCambioEstado(Reserva reserva, String estadoReserva) {
         Long id = reserva.getId();
-        String estadoAnterior = reserva.getEstadoReserva();
+        String estadoAnterior = reserva.getEstadoReserva().toUpperCase();
         String nuevoEstado = estadoReserva.toUpperCase();
 
-        reserva.setEstadoReserva(nuevoEstado);
-        validarEstadoReserva(reserva);
+        validarTransicionEstado(estadoAnterior, nuevoEstado);
+
+        if (estadoAnterior.equals(nuevoEstado)) {
+            log.info("Reserva id: {} ya se encuentra en estado {}", id, nuevoEstado);
+            return reserva;
+        }
 
         if (estadoAnterior.equalsIgnoreCase("CONFIRMADA")
                 && !nuevoEstado.equalsIgnoreCase("CONFIRMADA")) {
             log.info("Reserva id: {} deja de estar CONFIRMADA. Liberando disponibilidad", id);
-            liberarDisponibilidadReserva(reserva);
+            List<DisponibilidadDTO> disponibilidadesLiberadas = liberarDisponibilidadReserva(reserva);
             reserva.setEstadoReserva(nuevoEstado);
+
+            try {
+                return reservaRepository.save(reserva);
+            } catch (RuntimeException exception) {
+                reserva.setEstadoReserva(estadoAnterior);
+                throw resolverFalloConCompensacion(
+                        disponibilidadesLiberadas,
+                        "OCUPADA",
+                        exception,
+                        "guardar la cancelación o finalización"
+                );
+            }
         }
 
-        if (debeOcuparDisponibilidad(reserva)
-                && !estadoAnterior.equalsIgnoreCase("CONFIRMADA")) {
+        if (nuevoEstado.equalsIgnoreCase("CONFIRMADA")) {
             log.info("Reserva id: {} pasa a CONFIRMADA. Validando y ocupando disponibilidad", id);
             validarDisponibilidadReserva(reserva);
+            List<DisponibilidadDTO> disponibilidadesOcupadas = marcarDisponibilidadComoOcupada(reserva);
+            reserva.setEstadoReserva(nuevoEstado);
+
+            try {
+                return reservaRepository.save(reserva);
+            } catch (RuntimeException exception) {
+                reserva.setEstadoReserva(estadoAnterior);
+                throw resolverFalloConCompensacion(
+                        disponibilidadesOcupadas,
+                        "DISPONIBLE",
+                        exception,
+                        "guardar la confirmación"
+                );
+            }
         }
 
+        reserva.setEstadoReserva(nuevoEstado);
         Reserva reservaGuardada = reservaRepository.save(reserva);
-
-        if (debeOcuparDisponibilidad(reservaGuardada)
-                && !estadoAnterior.equalsIgnoreCase("CONFIRMADA")) {
-            marcarDisponibilidadComoOcupada(reservaGuardada);
-        }
-
         log.info("Estado actualizado correctamente para reserva id: {}", id);
 
         return reservaGuardada;
+    }
+
+    private void validarTransicionEstado(String estadoAnterior, String nuevoEstado) {
+        if (estadoAnterior.equals(nuevoEstado)) {
+            return;
+        }
+
+        boolean transicionValida = switch (estadoAnterior) {
+            case "PENDIENTE" -> nuevoEstado.equals("CONFIRMADA")
+                    || nuevoEstado.equals("CANCELADA");
+            case "CONFIRMADA" -> nuevoEstado.equals("CANCELADA")
+                    || nuevoEstado.equals("FINALIZADA");
+            case "CANCELADA", "FINALIZADA" -> false;
+            default -> false;
+        };
+
+        if (!transicionValida) {
+            throw new IllegalArgumentException(
+                    "Transición de reserva inválida: " + estadoAnterior + " -> " + nuevoEstado
+            );
+        }
+    }
+
+    private RuntimeException resolverFalloConCompensacion(
+            List<DisponibilidadDTO> disponibilidades,
+            String estadoCompensacion,
+            RuntimeException falloOriginal,
+            String operacion
+    ) {
+        RuntimeException falloCompensacion = compensarDisponibilidades(
+                disponibilidades,
+                estadoCompensacion
+        );
+
+        if (falloCompensacion == null) {
+            return falloOriginal;
+        }
+
+        HttpStatus estado = esGatewayTimeout(falloCompensacion)
+                ? HttpStatus.GATEWAY_TIMEOUT
+                : HttpStatus.SERVICE_UNAVAILABLE;
+
+        return new ResponseStatusException(
+                estado,
+                "Falló la compensación después de " + operacion,
+                falloCompensacion
+        );
+    }
+
+    private RuntimeException compensarDisponibilidades(
+            List<DisponibilidadDTO> disponibilidades,
+            String estadoCompensacion
+    ) {
+        RuntimeException primerFallo = null;
+
+        for (int indice = disponibilidades.size() - 1; indice >= 0; indice--) {
+            DisponibilidadDTO disponibilidad = disponibilidades.get(indice);
+            disponibilidad.setEstado(estadoCompensacion);
+
+            try {
+                disponibilidadClient.actualizarDisponibilidad(
+                        disponibilidad.getId(),
+                        disponibilidad
+                );
+            } catch (RuntimeException exception) {
+                if (primerFallo == null) {
+                    primerFallo = exception;
+                }
+            }
+        }
+
+        return primerFallo;
+    }
+
+    private boolean esFalloRemotoAmbiguo(RuntimeException exception) {
+        if (!(exception instanceof ResponseStatusException responseStatusException)) {
+            return false;
+        }
+
+        int estado = responseStatusException.getStatusCode().value();
+        return estado == HttpStatus.SERVICE_UNAVAILABLE.value()
+                || estado == HttpStatus.GATEWAY_TIMEOUT.value();
+    }
+
+    private boolean esGatewayTimeout(RuntimeException exception) {
+        return exception instanceof ResponseStatusException responseStatusException
+                && responseStatusException.getStatusCode().value()
+                == HttpStatus.GATEWAY_TIMEOUT.value();
     }
 
     private boolean prepararCreacionSegunRol(Reserva reserva, UsuarioDTO usuarioActual) {

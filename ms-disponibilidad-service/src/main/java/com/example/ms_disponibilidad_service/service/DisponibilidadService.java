@@ -106,7 +106,27 @@ public class DisponibilidadService {
         validarEstadoInterno(estado);
 
         Disponibilidad existente = findById(id);
-        existente.setEstado(estado.toUpperCase());
+        String estadoActual = existente.getEstado().toUpperCase();
+        String nuevoEstado = estado.toUpperCase();
+
+        if (estadoActual.equals(nuevoEstado)) {
+            log.info("Disponibilidad id: {} ya se encuentra en estado {}", id, nuevoEstado);
+            return existente;
+        }
+
+        boolean transicionValida = ("DISPONIBLE".equals(estadoActual)
+                && "OCUPADA".equals(nuevoEstado))
+                || ("OCUPADA".equals(estadoActual)
+                && "DISPONIBLE".equals(nuevoEstado));
+
+        if (!transicionValida) {
+            throw new IllegalArgumentException(
+                    "Transición de disponibilidad inválida: "
+                            + estadoActual + " -> " + nuevoEstado
+            );
+        }
+
+        existente.setEstado(nuevoEstado);
 
         Disponibilidad disponibilidadGuardada = disponibilidadRepository.save(existente);
 
