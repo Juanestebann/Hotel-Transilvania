@@ -11,16 +11,22 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
+import org.springframework.hateoas.MediaTypes;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.NoSuchElementException;
+
+import com.example.ms_cliente_service.model.Cliente;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.ArgumentMatchers.any;
 
 @WebMvcTest(ClienteController.class)
 @AutoConfigureMockMvc
@@ -103,6 +109,43 @@ class ClienteControllerSecurityTest {
     }
 
     @Test
+    void userNoPuedeListarClientes() throws Exception {
+        configurarToken("token-user", "mavis", "USER");
+
+        mockMvc.perform(get("/api/v1/clientes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-user"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminPuedeListarClientes() throws Exception {
+        configurarToken("token-admin", "dracula", "ADMIN");
+        when(clienteService.findAll()).thenReturn(List.of(crearCliente()));
+
+        mockMvc.perform(get("/api/v1/clientes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-admin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1));
+
+        verify(clienteService).findAll();
+    }
+
+    @Test
+    void adminPuedeCrearCliente() throws Exception {
+        configurarToken("token-admin", "dracula", "ADMIN");
+        when(clienteService.guardar(any(Cliente.class))).thenReturn(crearCliente());
+
+        mockMvc.perform(post("/api/v1/clientes")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-admin")
+                        .contentType(MediaTypes.HAL_JSON)
+                        .content(jsonCliente()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1));
+
+        verify(clienteService).guardar(any(Cliente.class));
+    }
+
+    @Test
     void tokenInvalidoRecibeUnauthorized() throws Exception {
         when(jwtService.extractNombre("token-invalido"))
                 .thenThrow(new IllegalArgumentException("Token inválido"));
@@ -116,5 +159,28 @@ class ClienteControllerSecurityTest {
         when(jwtService.extractNombre(token)).thenReturn(nombre);
         when(jwtService.extractRol(token)).thenReturn(rol);
         when(jwtService.isTokenValid(token)).thenReturn(true);
+    }
+
+    private Cliente crearCliente() {
+        Cliente cliente = new Cliente();
+        cliente.setId(1L);
+        cliente.setRutDocumento("11111111-1");
+        cliente.setTelefono("+56912345678");
+        cliente.setDireccion("Santiago");
+        cliente.setRolCliente("ADMIN");
+        cliente.setTipoCliente("FRECUENTE");
+        return cliente;
+    }
+
+    private String jsonCliente() {
+        return """
+                {
+                    "rutDocumento": "11111111-1",
+                    "telefono": "+56912345678",
+                    "direccion": "Santiago",
+                    "rolCliente": "ADMIN",
+                    "tipoCliente": "FRECUENTE"
+                }
+                """;
     }
 }
