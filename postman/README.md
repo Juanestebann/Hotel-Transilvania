@@ -184,6 +184,21 @@ Flujo validado por Gateway con usuarios temporales de entorno local, no versiona
 
 Si se usan otros usuarios locales, ajustar solo las variables del environment en Postman.
 
+### Revision final Postman / Gateway
+
+Revision final ejecutada el 2026-07-12 contra el API Gateway real en `http://localhost:8080`.
+
+- Metodo: validacion manual equivalente a la coleccion, porque Newman no estaba instalado en el entorno local.
+- Docker Compose: servicios levantados y publicados en los puertos esperados.
+- Gateway: `GET /api/v1/hoteles` respondio `200 OK`; no respondio Oracle XDB.
+- Trazabilidad: `X-Correlation-Id: revision-final-gateway` fue enviado y devuelto por el Gateway; sin header enviado, el Gateway genero uno nuevo.
+- Flujo feliz validado: login ADMIN, login USER, `usuarios/me`, cliente, validacion cliente, hotel, habitacion, disponibilidad de una noche, reserva, pago `APROBADO`, reserva `CONFIRMADA`, disponibilidad `OCUPADA` y resena.
+- Casos negativos validados: `401` sin token, `403` con USER en endpoint ADMIN y `404` con ID inexistente.
+- Casos `503` y `504`: no ejecutados en la revision final para no interrumpir contenedores; quedan contemplados como pruebas manuales tecnicas en esta guia.
+- Limpieza: los datos temporales de la corrida final fueron eliminados por API en orden seguro.
+
+Usuarios usados en la revision: `codex_e2e_admin` y `codex_e2e_user`, existentes solo en la base local de prueba. Sus credenciales no se versionan.
+
 ## Limpieza de datos temporales
 
 Ejecutar la carpeta `99 Limpieza manual` al terminar. Intenta limpiar en orden:
