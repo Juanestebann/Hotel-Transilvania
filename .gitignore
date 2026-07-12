@@ -9,6 +9,7 @@ target/
 logs/
 *.log
 *.json
+!postman/*.json
 
 # VS Code
 .vscode/

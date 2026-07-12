@@ -63,6 +63,27 @@ class CorrelationIdGlobalFilterTest {
     }
 
     @Test
+    void agregaCorrelationIdAntesDelCommitAunqueDownstreamLimpieHeaders() {
+        String correlationId = "codex-final-check";
+        MockServerWebExchange exchange = exchange(MockServerHttpRequest.get("/api/v1/hoteles")
+                .header(CorrelationIdGlobalFilter.CORRELATION_ID_HEADER, correlationId));
+        AtomicReference<ServerWebExchange> downstream = new AtomicReference<>();
+        GatewayFilterChain chain = correlatedExchange -> {
+            downstream.set(correlatedExchange);
+            correlatedExchange.getResponse().setStatusCode(HttpStatus.OK);
+            correlatedExchange.getResponse().getHeaders().clear();
+            return correlatedExchange.getResponse().setComplete();
+        };
+
+        filter.filter(exchange, chain).block();
+
+        assertEquals(correlationId, downstream.get().getRequest().getHeaders()
+                .getFirst(CorrelationIdGlobalFilter.CORRELATION_ID_HEADER));
+        assertEquals(correlationId, exchange.getResponse().getHeaders()
+                .getFirst(CorrelationIdGlobalFilter.CORRELATION_ID_HEADER));
+    }
+
+    @Test
     void permiteContinuarLaCadenaSinCambiarStatus() {
         MockServerWebExchange exchange = exchange(MockServerHttpRequest.post("/api/v1/pagos"));
         AtomicBoolean invoked = new AtomicBoolean();

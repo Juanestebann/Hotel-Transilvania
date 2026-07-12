@@ -1,0 +1,974 @@
+{
+  "info": {
+    "_postman_id": "5375d6d4-9d5a-4f86-97dc-80b4f1f2a8a1",
+    "name": "Hotel Transilvania - E2E Gateway",
+    "description": "Evidencia versionable de interoperabilidad E2E via API Gateway. Todas las requests usan {{baseUrl}} y validan X-Correlation-Id.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.environment.get('correlationId')) {",
+          "  pm.environment.set('correlationId', pm.variables.replaceIn('{{$guid}}'));",
+          "}",
+          "if (!pm.environment.get('runSuffix')) {",
+          "  const suffix = Date.now().toString().slice(-6);",
+          "  pm.environment.set('runSuffix', suffix);",
+          "  pm.environment.set('rutDocumento', `E2E-${suffix}`);",
+          "  pm.environment.set('numeroHabitacion', `E2E-${suffix}`);",
+          "}",
+          "const now = new Date().toISOString().slice(0, 19);",
+          "pm.environment.set('fechaCreacion', now);",
+          "pm.environment.set('fechaPago', now);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Gateway devuelve X-Correlation-Id', function () {",
+          "  const header = pm.response.headers.get('X-Correlation-Id');",
+          "  pm.expect(header, 'X-Correlation-Id').to.exist;",
+          "  const expected = pm.variables.get('correlationId');",
+          "  if (expected) {",
+          "    pm.expect(header).to.eql(expected);",
+          "  }",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00 Setup autenticacion",
+      "item": [
+        {
+          "name": "Login ADMIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login admin 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('token admin presente', function () { pm.expect(json.token).to.be.a('string').and.not.empty; });",
+                  "pm.test('rol admin', function () { pm.expect(json.rol).to.eql('ADMIN'); });",
+                  "pm.environment.set('adminToken', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          }
+        },
+        {
+          "name": "Login USER",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login user 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('token user presente', function () { pm.expect(json.token).to.be.a('string').and.not.empty; });",
+                  "pm.test('rol user', function () { pm.expect(json.rol).to.eql('USER'); });",
+                  "pm.environment.set('userToken', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{userUsername}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          }
+        },
+        {
+          "name": "GET usuario autenticado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('usuario me 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('idUsuario presente', function () { pm.expect(json.idUsuario).to.be.a('number'); });",
+                  "pm.environment.set('idUsuario', json.idUsuario);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/usuarios/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 Flujo feliz Gateway",
+      "item": [
+        {
+          "name": "POST cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('cliente creado 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.test('idCliente presente', function () { pm.expect(json.id).to.be.a('number'); });",
+                  "pm.environment.set('idCliente', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rutDocumento\": \"{{rutDocumento}}\",\n  \"telefono\": \"+569{{runSuffix}}\",\n  \"direccion\": \"Av. Gateway E2E {{runSuffix}}\",\n  \"rolCliente\": \"USER\",\n  \"tipoCliente\": \"TITULAR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/clientes"
+          }
+        },
+        {
+          "name": "GET cliente validacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('validacion cliente 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('cliente existe', function () {",
+                  "  pm.expect(json.idCliente).to.eql(Number(pm.environment.get('idCliente')));",
+                  "  pm.expect(json.existe).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/clientes/{{idCliente}}/validacion"
+          }
+        },
+        {
+          "name": "POST hotel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('hotel creado 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.test('idHotel presente', function () { pm.expect(json.id).to.be.a('number'); });",
+                  "pm.environment.set('idHotel', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Hotel Gateway E2E {{runSuffix}}\",\n  \"direccion\": \"Av. Hotelera {{runSuffix}}\",\n  \"ciudad\": \"Santiago\",\n  \"pais\": \"Chile\",\n  \"categoria\": \"5 estrellas\",\n  \"descripcion\": \"Hotel temporal para evidencia E2E por Gateway\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/hoteles"
+          }
+        },
+        {
+          "name": "POST habitacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('habitacion creada 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.test('idHabitacion presente', function () { pm.expect(json.idHabitacion).to.be.a('number'); });",
+                  "pm.environment.set('idHabitacion', json.idHabitacion);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroHabitacion\": \"{{numeroHabitacion}}\",\n  \"tipoHabitacion\": \"SUITE\",\n  \"precioBase\": 120000.0,\n  \"capacidad\": 2,\n  \"estadoHabitacion\": \"DISPONIBLE\",\n  \"idHotel\": {{idHotel}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/habitaciones"
+          }
+        },
+        {
+          "name": "POST disponibilidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('disponibilidad creada 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.test('idDisponibilidad presente', function () { pm.expect(json.id).to.be.a('number'); });",
+                  "pm.test('estado inicial disponible', function () { pm.expect(json.estado).to.eql('DISPONIBLE'); });",
+                  "pm.environment.set('idDisponibilidad', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idHabitacion\": {{idHabitacion}},\n  \"fecha\": \"{{fechaDisponibilidad}}\",\n  \"estado\": \"DISPONIBLE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/disponibilidades"
+          }
+        },
+        {
+          "name": "POST reserva PENDIENTE",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('reserva creada 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.test('idReserva presente', function () { pm.expect(json.id).to.be.a('number'); });",
+                  "pm.test('reserva inicia pendiente', function () { pm.expect(json.estadoReserva).to.eql('PENDIENTE'); });",
+                  "pm.environment.set('idReserva', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCliente\": {{idCliente}},\n  \"idUsuario\": {{idUsuario}},\n  \"idHotel\": {{idHotel}},\n  \"idHabitacion\": {{idHabitacion}},\n  \"fechaInicio\": \"{{fechaInicio}}\",\n  \"fechaFin\": \"{{fechaFin}}\",\n  \"cantidadPersonas\": 2,\n  \"estadoReserva\": \"PENDIENTE\",\n  \"fechaCreacion\": \"{{fechaCreacion}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/reservas"
+          }
+        },
+        {
+          "name": "POST pago APROBADO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('pago creado 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "pm.test('idPago presente', function () { pm.expect(json.idPago).to.be.a('number'); });",
+                  "pm.test('pago queda aprobado', function () { pm.expect(json.estadoPago).to.eql('APROBADO'); });",
+                  "pm.environment.set('idPago', json.idPago);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservaId\": {{idReserva}},\n  \"idUsuario\": {{idUsuario}},\n  \"monto\": 250000.00,\n  \"metodoPago\": \"TARJETA\",\n  \"estadoPago\": \"APROBADO\",\n  \"fechaPago\": \"{{fechaPago}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/pagos"
+          }
+        },
+        {
+          "name": "GET reserva confirmada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('reserva consultada 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('reserva queda confirmada por pago', function () { pm.expect(json.estadoReserva).to.eql('CONFIRMADA'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/reservas/{{idReserva}}"
+          }
+        },
+        {
+          "name": "GET disponibilidad ocupada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('disponibilidad consultada 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('disponibilidad queda ocupada por reserva confirmada', function () { pm.expect(json.estado).to.eql('OCUPADA'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/disponibilidades/{{idDisponibilidad}}"
+          }
+        },
+        {
+          "name": "POST resena",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('resena creada 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('idResena presente', function () { pm.expect(json.id).to.be.a('number'); });",
+                  "pm.environment.set('idResena', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCliente\": {{idCliente}},\n  \"idHotel\": {{idHotel}},\n  \"idHabitacion\": {{idHabitacion}},\n  \"idReserva\": {{idReserva}},\n  \"calificacion\": 5,\n  \"comentario\": \"Evidencia E2E por Gateway\",\n  \"fechaComentario\": \"{{fechaDisponibilidad}}\",\n  \"estadoResena\": \"PUBLICADA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/resenas"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Pruebas negativas automaticas",
+      "item": [
+        {
+          "name": "401 sin token - usuario me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('sin token responde 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/usuarios/me"
+          }
+        },
+        {
+          "name": "403 USER en endpoint ADMIN - listar clientes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('user en endpoint admin responde 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/clientes"
+          }
+        },
+        {
+          "name": "404 id inexistente - buscar hotel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('id inexistente responde 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/hoteles/{{nonexistentId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Pruebas negativas manuales 503 504",
+      "description": "Ejecutar estas requests solo despues de detener o pausar la dependencia indicada. Ver postman/README.md.",
+      "item": [
+        {
+          "name": "503 dependencia detenida - hotel-service requerido por habitacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dependencia detenida responde 503', function () { pm.response.to.have.status(503); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroHabitacion\": \"MANUAL-503-{{runSuffix}}\",\n  \"tipoHabitacion\": \"SUITE\",\n  \"precioBase\": 120000.0,\n  \"capacidad\": 2,\n  \"estadoHabitacion\": \"DISPONIBLE\",\n  \"idHotel\": {{idHotel}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/habitaciones"
+          }
+        },
+        {
+          "name": "504 dependencia pausada - hotel-service requerido por habitacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('dependencia pausada responde 504', function () { pm.response.to.have.status(504); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroHabitacion\": \"MANUAL-504-{{runSuffix}}\",\n  \"tipoHabitacion\": \"SUITE\",\n  \"precioBase\": 120000.0,\n  \"capacidad\": 2,\n  \"estadoHabitacion\": \"DISPONIBLE\",\n  \"idHotel\": {{idHotel}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/habitaciones"
+          }
+        }
+      ]
+    },
+    {
+      "name": "99 Limpieza manual",
+      "description": "Ejecutar al terminar el flujo feliz. Las pruebas aceptan 2xx o 404 para facilitar reintentos parciales.",
+      "item": [
+        {
+          "name": "DELETE resena",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('limpieza resena 200 o 404', function () { pm.expect([200, 404]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/resenas/{{idResena}}"
+          }
+        },
+        {
+          "name": "DELETE pago",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('limpieza pago 204 o 404', function () { pm.expect([204, 404]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/pagos/{{idPago}}"
+          }
+        },
+        {
+          "name": "PUT reserva CANCELADA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('cancelar reserva 200 o 404', function () { pm.expect([200, 404]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/reservas/{{idReserva}}/estado?estadoReserva=CANCELADA"
+          }
+        },
+        {
+          "name": "DELETE reserva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('limpieza reserva 204 o 404', function () { pm.expect([204, 404]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/reservas/{{idReserva}}"
+          }
+        },
+        {
+          "name": "DELETE disponibilidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('limpieza disponibilidad 204 o 404', function () { pm.expect([204, 404]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/disponibilidades/{{idDisponibilidad}}"
+          }
+        },
+        {
+          "name": "DELETE habitacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('limpieza habitacion 204 o 404', function () { pm.expect([204, 404]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/habitaciones/{{idHabitacion}}"
+          }
+        },
+        {
+          "name": "DELETE hotel",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('limpieza hotel 204 o 404', function () { pm.expect([204, 404]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/hoteles/{{idHotel}}"
+          }
+        },
+        {
+          "name": "DELETE cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('limpieza cliente 204 o 404', function () { pm.expect([204, 404]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/clientes/{{idCliente}}"
+          }
+        }
+      ]
+    }
+  ]
+}

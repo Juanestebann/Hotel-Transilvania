@@ -38,6 +38,11 @@ public class CorrelationIdGlobalFilter implements GlobalFilter, Ordered {
 
         correlatedExchange.getResponse().getHeaders()
                 .set(CORRELATION_ID_HEADER, correlationId);
+        correlatedExchange.getResponse().beforeCommit(() -> {
+            correlatedExchange.getResponse().getHeaders()
+                    .set(CORRELATION_ID_HEADER, correlationId);
+            return Mono.empty();
+        });
 
         return chain.filter(correlatedExchange)
                 .doFinally(signalType -> logRequest(correlatedExchange, correlationId, startNanos));
