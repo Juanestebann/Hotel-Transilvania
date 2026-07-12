@@ -3,6 +3,11 @@ package com.example.ms_resena_service.controller;
 import com.example.ms_resena_service.model.Resena;
 import com.example.ms_resena_service.service.ResenaService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -31,8 +36,13 @@ public class ResenaController {
 
     @Operation(
             summary = "Listar reseñas",
-            description = "Obtiene todas las reseñas registradas en el sistema."
+            description = "Obtiene todas las reseñas registradas en el sistema. Requiere rol ADMIN."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reseñas listadas correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<Resena>> listarResenas() {
@@ -45,8 +55,16 @@ public class ResenaController {
 
     @Operation(
             summary = "Buscar reseña por ID",
-            description = "Obtiene una reseña específica según su identificador."
+            description = "Obtiene una reseña específica según su identificador y valida su reserva asociada. Requiere rol USER o ADMIN."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reseña encontrada"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos sobre la reseña o reserva asociada", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Reseña o reserva asociada no encontrada", content = @Content),
+            @ApiResponse(responseCode = "503", description = "ms-reserva-service no disponible", content = @Content),
+            @ApiResponse(responseCode = "504", description = "Timeout consultando ms-reserva-service", content = @Content)
+    })
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Resena> buscarPorId(@PathVariable Long id) {
@@ -59,8 +77,38 @@ public class ResenaController {
 
     @Operation(
             summary = "Crear reseña",
-            description = "Registra una nueva reseña asociada a un cliente, hotel, habitación y reserva."
+            description = "Registra una nueva reseña y valida que cliente, hotel y habitación coincidan con la reserva consultada en ms-reserva-service. Requiere rol USER o ADMIN.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = Resena.class),
+                            examples = @ExampleObject(
+                                    name = "Reseña",
+                                    value = """
+                                            {
+                                              "idCliente": 1,
+                                              "idHotel": 1,
+                                              "idHabitacion": 1,
+                                              "idReserva": 1,
+                                              "calificacion": 5,
+                                              "comentario": "Excelente estadía y atención",
+                                              "fechaComentario": "2026-07-12",
+                                              "estadoResena": "PUBLICADA"
+                                            }
+                                            """
+                            )
+                    )
+            )
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reseña registrada correctamente"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos o relación inconsistente con la reserva", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos para reseñar la reserva", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Reserva relacionada no encontrada", content = @Content),
+            @ApiResponse(responseCode = "503", description = "ms-reserva-service no disponible", content = @Content),
+            @ApiResponse(responseCode = "504", description = "Timeout consultando ms-reserva-service", content = @Content)
+    })
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PostMapping
     public ResponseEntity<Resena> guardarResena(@Valid @RequestBody Resena resena) {
@@ -73,8 +121,38 @@ public class ResenaController {
 
     @Operation(
             summary = "Actualizar reseña",
-            description = "Modifica los datos de una reseña existente."
+            description = "Modifica los datos de una reseña existente y valida la nueva reserva asociada en ms-reserva-service. Requiere rol USER o ADMIN.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = Resena.class),
+                            examples = @ExampleObject(
+                                    name = "Reseña actualizada",
+                                    value = """
+                                            {
+                                              "idCliente": 1,
+                                              "idHotel": 1,
+                                              "idHabitacion": 1,
+                                              "idReserva": 1,
+                                              "calificacion": 4,
+                                              "comentario": "Muy buena estadía",
+                                              "fechaComentario": "2026-07-12",
+                                              "estadoResena": "PUBLICADA"
+                                            }
+                                            """
+                            )
+                    )
+            )
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reseña actualizada correctamente"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos o relación inconsistente con la reserva", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos sobre la reseña", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Reseña o reserva relacionada no encontrada", content = @Content),
+            @ApiResponse(responseCode = "503", description = "ms-reserva-service no disponible", content = @Content),
+            @ApiResponse(responseCode = "504", description = "Timeout consultando ms-reserva-service", content = @Content)
+    })
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Resena> actualizarResena(
@@ -90,8 +168,16 @@ public class ResenaController {
 
     @Operation(
             summary = "Eliminar reseña",
-            description = "Elimina una reseña según su identificador."
+            description = "Elimina una reseña según su identificador y valida la reserva asociada. Requiere rol USER o ADMIN."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reseña eliminada correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos sobre la reseña", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Reseña o reserva relacionada no encontrada", content = @Content),
+            @ApiResponse(responseCode = "503", description = "ms-reserva-service no disponible", content = @Content),
+            @ApiResponse(responseCode = "504", description = "Timeout consultando ms-reserva-service", content = @Content)
+    })
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> eliminarResena(@PathVariable Long id) {
@@ -101,8 +187,13 @@ public class ResenaController {
 
     @Operation(
             summary = "Buscar reseñas por cliente",
-            description = "Obtiene todas las reseñas asociadas a un cliente específico."
+            description = "Obtiene todas las reseñas asociadas a un cliente específico. Requiere rol ADMIN."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reseñas filtradas correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/cliente/{idCliente}")
     public ResponseEntity<List<Resena>> buscarPorCliente(@PathVariable Long idCliente) {
@@ -115,8 +206,13 @@ public class ResenaController {
 
     @Operation(
             summary = "Buscar reseñas por hotel",
-            description = "Obtiene todas las reseñas asociadas a un hotel específico."
+            description = "Obtiene todas las reseñas asociadas a un hotel específico. Requiere rol ADMIN."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reseñas filtradas correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/hotel/{idHotel}")
     public ResponseEntity<List<Resena>> buscarPorHotel(@PathVariable Long idHotel) {
@@ -129,8 +225,13 @@ public class ResenaController {
 
     @Operation(
             summary = "Buscar reseñas por habitación",
-            description = "Obtiene todas las reseñas asociadas a una habitación específica."
+            description = "Obtiene todas las reseñas asociadas a una habitación específica. Requiere rol ADMIN."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reseñas filtradas correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/habitacion/{idHabitacion}")
     public ResponseEntity<List<Resena>> buscarPorHabitacion(@PathVariable Long idHabitacion) {
@@ -143,8 +244,16 @@ public class ResenaController {
 
     @Operation(
             summary = "Buscar reseñas por reserva",
-            description = "Obtiene todas las reseñas asociadas a una reserva específica."
+            description = "Obtiene todas las reseñas asociadas a una reserva específica y valida la reserva en ms-reserva-service. Requiere rol USER o ADMIN."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reseñas filtradas correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos sobre la reserva", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Reserva no encontrada", content = @Content),
+            @ApiResponse(responseCode = "503", description = "ms-reserva-service no disponible", content = @Content),
+            @ApiResponse(responseCode = "504", description = "Timeout consultando ms-reserva-service", content = @Content)
+    })
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/reserva/{idReserva}")
     public ResponseEntity<List<Resena>> buscarPorReserva(@PathVariable Long idReserva) {
@@ -157,8 +266,13 @@ public class ResenaController {
 
     @Operation(
             summary = "Buscar reseñas por calificación",
-            description = "Obtiene las reseñas filtradas por calificación."
+            description = "Obtiene las reseñas filtradas por calificación. Requiere rol ADMIN."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reseñas filtradas correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/calificacion/{calificacion}")
     public ResponseEntity<List<Resena>> buscarPorCalificacion(@PathVariable Integer calificacion) {
@@ -171,8 +285,13 @@ public class ResenaController {
 
     @Operation(
             summary = "Buscar reseñas por estado",
-            description = "Obtiene reseñas filtradas por estado. Endpoint disponible solo para administradores."
+            description = "Obtiene reseñas filtradas por estadoResena. Endpoint disponible solo para administradores."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Reseñas filtradas correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/estado/{estadoResena}")
     public ResponseEntity<List<Resena>> buscarPorEstado(@PathVariable String estadoResena) {

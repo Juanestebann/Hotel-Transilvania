@@ -3,6 +3,14 @@ package com.example.ms_auth_usuarios_service.controller;
 import com.example.ms_auth_usuarios_service.dto.UsuarioResponseDTO;
 import com.example.ms_auth_usuarios_service.model.Usuario;
 import com.example.ms_auth_usuarios_service.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +23,11 @@ import java.util.List;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
+@Tag(
+        name = "Usuarios",
+        description = "Operaciones protegidas para consultar y administrar usuarios del sistema"
+)
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/usuarios")
 @RequiredArgsConstructor
@@ -22,6 +35,16 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
+    @Operation(
+            summary = "Obtener usuario autenticado",
+            description = "Devuelve los datos básicos del usuario asociado al token JWT. Requiere rol USER o ADMIN."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuario autenticado encontrado"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos para consultar este recurso", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Usuario autenticado no encontrado", content = @Content)
+    })
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/me")
     public ResponseEntity<UsuarioResponseDTO> findCurrentUser(Authentication authentication) {
@@ -29,6 +52,15 @@ public class UsuarioController {
         return ResponseEntity.ok(UsuarioResponseDTO.from(usuario));
     }
 
+    @Operation(
+            summary = "Listar usuarios",
+            description = "Lista todos los usuarios registrados. Requiere rol ADMIN."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuarios listados correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content)
+    })
     // Solo ADMIN puede listar todos los usuarios
     // http://localhost:8081/api/v1/usuarios
     @PreAuthorize("hasRole('ADMIN')")
@@ -41,6 +73,16 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
+    @Operation(
+            summary = "Buscar usuario por ID",
+            description = "Obtiene un usuario por su identificador. Requiere rol ADMIN."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuario encontrado"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Usuario no encontrado", content = @Content)
+    })
     // Solo ADMIN puede buscar usuarios por ID
     // http://localhost:8081/api/v1/usuarios/1
     // http://localhost:8081/api/v1/usuarios/9999 --> Usuario inexistente
@@ -54,6 +96,15 @@ public class UsuarioController {
         return ResponseEntity.ok(usuario);
     }
 
+    @Operation(
+            summary = "Buscar usuarios por rol",
+            description = "Lista usuarios filtrados por rol, por ejemplo ADMIN o USER. Requiere rol ADMIN."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuarios filtrados correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content)
+    })
     // Solo ADMIN puede buscar usuarios por rol
     // http://localhost:8081/api/v1/usuarios/rol/ADMIN
     @PreAuthorize("hasRole('ADMIN')")
@@ -66,6 +117,32 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarios);
     }
 
+    @Operation(
+            summary = "Crear usuario",
+            description = "Crea un usuario manualmente con rol USER o ADMIN. Requiere rol ADMIN.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = Usuario.class),
+                            examples = @ExampleObject(
+                                    name = "Usuario",
+                                    value = """
+                                            {
+                                              "nombre": "admin2",
+                                              "password": "clave123",
+                                              "rol": "ADMIN"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Usuario creado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos, id enviado, nombre duplicado o rol inválido", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content)
+    })
     // Solo ADMIN puede crear usuarios manualmente
     // http://localhost:8081/api/v1/usuarios
     @PreAuthorize("hasRole('ADMIN')")
@@ -78,6 +155,33 @@ public class UsuarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioGuardado);
     }
 
+    @Operation(
+            summary = "Actualizar usuario",
+            description = "Actualiza nombre, contraseña o rol de un usuario existente. Requiere rol ADMIN.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = Usuario.class),
+                            examples = @ExampleObject(
+                                    name = "Usuario actualizado",
+                                    value = """
+                                            {
+                                              "nombre": "usuario1",
+                                              "password": "nuevaClave123",
+                                              "rol": "USER"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuario actualizado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos o rol inválido", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Usuario no encontrado", content = @Content)
+    })
     // Solo ADMIN puede actualizar usuarios
     // http://localhost:8081/api/v1/usuarios/1
     @PreAuthorize("hasRole('ADMIN')")
@@ -90,6 +194,16 @@ public class UsuarioController {
         return ResponseEntity.ok(usuarioActualizado);
     }
 
+    @Operation(
+            summary = "Eliminar usuario",
+            description = "Elimina un usuario por su identificador. Requiere rol ADMIN."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Usuario eliminado correctamente", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Usuario no encontrado", content = @Content)
+    })
     // Solo ADMIN puede eliminar usuarios
     // http://localhost:8081/api/v1/usuarios/5
     @PreAuthorize("hasRole('ADMIN')")

@@ -3,6 +3,11 @@ package com.example.ms_servicioAdicional_service.controller;
 import com.example.ms_servicioAdicional_service.model.ServicioAdicionalModel;
 import com.example.ms_servicioAdicional_service.service.ServicioAdicionalService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -30,8 +35,13 @@ public class ServicioAdicionalController {
 
     @Operation(
             summary = "Listar servicios adicionales",
-            description = "Obtiene todos los servicios adicionales o permite filtrarlos por hotel, reserva, estado o nombre."
+            description = "Obtiene todos los servicios adicionales o permite filtrarlos por hotel, reserva, estado o nombre. Requiere rol USER o ADMIN."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Servicios adicionales listados correctamente"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos para consultar servicios adicionales", content = @Content)
+    })
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping
     public ResponseEntity<?> findAll(
@@ -73,8 +83,14 @@ public class ServicioAdicionalController {
 
     @Operation(
             summary = "Buscar servicio adicional por ID",
-            description = "Obtiene un servicio adicional específico según su identificador."
+            description = "Obtiene un servicio adicional específico según su identificador. Requiere rol USER o ADMIN."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Servicio adicional encontrado"),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos para consultar servicios adicionales", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Servicio adicional no encontrado", content = @Content)
+    })
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<ServicioAdicionalModel> findById(
@@ -92,8 +108,36 @@ public class ServicioAdicionalController {
 
     @Operation(
             summary = "Crear servicio adicional",
-            description = "Registra un nuevo servicio adicional. Disponible solo para administradores."
+            description = "Registra un servicio adicional, valida el hotel y, si se informa idReserva, valida la reserva relacionada. Disponible solo para administradores.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = ServicioAdicionalModel.class),
+                            examples = @ExampleObject(
+                                    name = "Servicio adicional",
+                                    value = """
+                                            {
+                                              "idHotel": 1,
+                                              "idReserva": 1,
+                                              "nombre": "Spa nocturno",
+                                              "descripcion": "Acceso al spa del hotel durante la noche",
+                                              "precio": 35000.00,
+                                              "estado": "ACTIVO"
+                                            }
+                                            """
+                            )
+                    )
+            )
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Servicio adicional creado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Hotel o reserva relacionada no encontrada", content = @Content),
+            @ApiResponse(responseCode = "503", description = "Servicio remoto requerido no disponible", content = @Content),
+            @ApiResponse(responseCode = "504", description = "Timeout consultando servicio remoto requerido", content = @Content)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ServicioAdicionalModel> guardarServicio(
@@ -111,8 +155,36 @@ public class ServicioAdicionalController {
 
     @Operation(
             summary = "Actualizar servicio adicional",
-            description = "Actualiza los datos de un servicio adicional existente. Disponible solo para administradores."
+            description = "Actualiza los datos de un servicio adicional existente y revalida hotel y reserva si corresponde. Disponible solo para administradores.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = ServicioAdicionalModel.class),
+                            examples = @ExampleObject(
+                                    name = "Servicio adicional actualizado",
+                                    value = """
+                                            {
+                                              "idHotel": 1,
+                                              "idReserva": 1,
+                                              "nombre": "Cena temática",
+                                              "descripcion": "Cena especial en restaurant del hotel",
+                                              "precio": 45000.00,
+                                              "estado": "ACTIVO"
+                                            }
+                                            """
+                            )
+                    )
+            )
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Servicio adicional actualizado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Servicio adicional, hotel o reserva relacionada no encontrada", content = @Content),
+            @ApiResponse(responseCode = "503", description = "Servicio remoto requerido no disponible", content = @Content),
+            @ApiResponse(responseCode = "504", description = "Timeout consultando servicio remoto requerido", content = @Content)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ServicioAdicionalModel> actualizarServicio(
@@ -133,6 +205,12 @@ public class ServicioAdicionalController {
             summary = "Eliminar servicio adicional",
             description = "Elimina un servicio adicional según su identificador. Disponible solo para administradores."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Servicio adicional eliminado correctamente", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido o expirado", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permisos de ADMIN", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Servicio adicional no encontrado", content = @Content)
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarServicio(
